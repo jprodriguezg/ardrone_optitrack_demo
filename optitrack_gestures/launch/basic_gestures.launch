@@ -2,8 +2,8 @@
 <launch>
 
 	<node name="gestures_node" pkg="optitrack_gestures" type="takeoff_land_node" output="screen">
-		<remap from="leader_pose_topic"  to="/optitrack/gesture_marker"/>
-		<rosparam>gestures_def:  [0.25, 2.2]</rosparam>  <!-- [land altitude, takeoff altitude] -->
+		<remap from="gesture_marker_pose_topic"  to="/optitrack/gesture_marker"/>
+		<rosparam>gestures_def:  [0.25, 2.0]</rosparam>  <!-- [land altitude, takeoff altitude] -->
 	</node>
 
 	<node name="drone_target_points" pkg="drone_following_leader" type="following_leader_node" output="screen">
