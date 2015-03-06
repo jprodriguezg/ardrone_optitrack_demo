@@ -15,7 +15,7 @@
 
 // Some global variables
 drone_control_msgs::send_control_data leader_publish_data;
-std::vector<double> Leader_info (4,0), virtual_fence (5), ant_pose(4,0); 
+std::vector<double> Leader_info (4,0), virtual_fence (5), ant_pose(4,0), initial_pose(4,0); 
 std::vector<float> leader_quaternion (4,0); 
 int marker_id = 1.0, leader_id =2.0, ant_leader_id =2.0; 
 
@@ -47,6 +47,7 @@ void hasReceivedLeaderState(const optitrack_msgs::RigidBodies::ConstPtr& msg){
 	leader_quaternion[2] = msg->rigid_bodies[marker_id].pose.orientation.z;
 	leader_quaternion[3] = msg->rigid_bodies[marker_id].pose.orientation.w;
 	Leader_info[3] = quaternion2angles(leader_quaternion);
+	ant_leader_id = leader_id;
 
   return;
 } 
@@ -92,14 +93,14 @@ ros::Rate rate(20.0);
 ros::Subscriber optitrack_sub_=nh_.subscribe("leader_pose_topic", 1, hasReceivedLeaderState);
 ros::Publisher leader_info_pub_=nh_.advertise<drone_control_msgs::send_control_data>("leader_info_topic", 1);
 
-ant_pose[0]=-1.4;
-ant_pose[1]=-0.5;
-ant_pose[2]=1.0;
-ant_pose[3]=0.0;
+nh_.getParam("/drone_target_points/initial_pose",initial_pose);
+ant_pose[0] = initial_pose[0];
+ant_pose[1] = initial_pose[1];
+ant_pose[2] = initial_pose[2];
+ant_pose[3] = initial_pose[3];
 
 	while (ros::ok()){
 
-	ant_leader_id = leader_id;
 	nh_.getParam("/drone_control_node/virtual_fence",virtual_fence);
 	nh_.getParam("/drone_target_points/leader_id",leader_id);
 	

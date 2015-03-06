@@ -9,7 +9,9 @@
 	<node name="drone_target_points" pkg="drone_following_leader" type="following_leader_node" output="screen">
 		<remap from="leader_pose_topic"  to="/optitrack/rigid_bodies"/>
 		<remap from="leader_info_topic"  to="/drone_target_points"/>
-		<param name="leader_id" value="1"/>
+		<param name="leader_id" value="2"/>
+		<rosparam>initial_pose:  [-1.4, -0.5, 1.0, 0.0]</rosparam>  <!-- [x,y,z,yaw (degrees)] -->
+		
 	</node>
 
 
