@@ -36,11 +36,14 @@ include_directories(${catkin_INCLUDE_DIRS})
 
 ## Declare a cpp executable
 add_executable(takeoff_land_node src/takeoff-land.cpp)
+add_executable(optitrack_gestures_demo src/demo.cpp)
 
 add_dependencies(takeoff_land_node drone_control_msgs_generate_messages_cpp)
+add_dependencies(optitrack_gestures_demo drone_control_msgs_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(takeoff_land_node ${catkin_LIBRARIES})
+target_link_libraries(optitrack_gestures_demo ${catkin_LIBRARIES})
 
 
 #############
