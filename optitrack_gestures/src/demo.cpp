@@ -17,7 +17,7 @@
 // Define de gesturetype variable
 enum gesturestype{NON_GESTURE,HOVERING,TAKEOFF,LAND,FOLLOWME};
 // Some global variables
-std::vector<double> gesture_marker_info (4,0), gesture_signal(2,0), leader_info; 
+std::vector<double> gesture_marker_info (4,0), leader_info(4,0), LeaderFrame(2,0), GestureMarkerFrame(2,0); 
 std::vector<float> quaternion (4,0);
 std::deque<double> gestures_queue (25,NON_GESTURE);
 
@@ -60,13 +60,20 @@ void hasReceivedModelState(const geometry_msgs::PoseStamped::ConstPtr& msg){
   return;
 } 
 
+void WorldToLeaderframe(double angle){
 
+	angle=(PI*angle)/180;
+	LeaderFrame[0]=cos(angle)*leader_info[0]+sin(angle)*leader_info[1];
+	LeaderFrame[1]=-sin(angle)*leader_info[0]+cos(angle)*leader_info[1];
+	GestureMarkerFrame[0]=cos(angle)*gesture_marker_info[0]+sin(angle)*gesture_marker_info[1];
+	GestureMarkerFrame[1]=-sin(angle)*gesture_marker_info[0]+cos(angle)*gesture_marker_info[1];
+}
 
 gesturestype gesture_detector(double height){
 	
 	double shoulder_height, arm_longitud;
-	shoulder_height = height*0,83;
-	arm_longitud = height*0,48;
+	shoulder_height = height*(7/8);
+	arm_longitud = height*(4/9);
 
 	// LAND CONDITION
 	gesturestype gesture_out;
@@ -75,14 +82,14 @@ gesturestype gesture_detector(double height){
 	// HOVERING CONDITION
 	else if(gesture_marker_info[3] >= leader_info[3]-20 && gesture_marker_info[3] <= leader_info[3]+20 && 
 	gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1)
-		gesture_out = LAND;
-	// TAKEOFF FOLLWME
+		gesture_out = HOVERING;
+	// TAKEOFF FOLLOWME
 	else if (gesture_marker_info[2] > leader_info[3]+0.1)
 		gesture_out = FOLLOWME;
 	// TAKEOFF CONDITION
 	else if(gesture_marker_info[3] >= leader_info[3]-110 && gesture_marker_info[3] <= leader_info[3]-70 && 
 	gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1)
-		gesture_out = LAND;
+		gesture_out = TAKEOFF;
 	else
 		gesture_out = NON_GESTURE;
 
