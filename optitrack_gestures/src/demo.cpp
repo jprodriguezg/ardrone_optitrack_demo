@@ -21,8 +21,6 @@ std::vector<double> gesture_marker_info (4,0), gesture_signal(2,0), leader_info;
 std::vector<float> quaternion (4,0);
 std::deque<double> gestures_queue (25,NON_GESTURE);
 
-
-
 double quaternion2angles(std::vector<float> &quaternion){
 	double roll, pitch, yaw, Dyaw;
 	tf::Quaternion quat(quaternion[0], quaternion[1], quaternion[2], quaternion[3]);
@@ -64,17 +62,27 @@ void hasReceivedModelState(const geometry_msgs::PoseStamped::ConstPtr& msg){
 
 
 
-gesturestype gesture_detector(){
+gesturestype gesture_detector(double height){
 	
+	double shoulder_height, arm_longitud;
+	shoulder_height = height*0,83;
+	arm_longitud = height*0,48;
+
+	// LAND CONDITION
 	gesturestype gesture_out;
-	if(gesture_marker_info[2] < 0.24)
+	if (gesture_marker_info[2] < 0.2)
 		gesture_out = LAND;
-	else if (gesture_marker_info[2] > 2.2)
+	// HOVERING CONDITION
+	else if(gesture_marker_info[3] >= leader_info[3]-20 && gesture_marker_info[3] <= leader_info[3]+20 && 
+	gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1)
+		gesture_out = LAND;
+	// TAKEOFF FOLLWME
+	else if (gesture_marker_info[2] > leader_info[3]+0.1)
 		gesture_out = FOLLOWME;
-	else if (gesture_marker_info[2] > 2.2)
-		gesture_out = FOLLOWME;
-	else if (gesture_marker_info[2] > 2.2)
-		gesture_out = FOLLOWME;
+	// TAKEOFF CONDITION
+	else if(gesture_marker_info[3] >= leader_info[3]-110 && gesture_marker_info[3] <= leader_info[3]-70 && 
+	gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1)
+		gesture_out = LAND;
 	else
 		gesture_out = NON_GESTURE;
 
@@ -117,6 +125,11 @@ ros::Rate rate(20.0);
 std_msgs::Empty GestureMsg;
 gesturestype gesture_detected = NON_GESTURE;
 
+
+//Physical data
+double height;
+nh_.getParam("/gestures_node/leader_height",height);
+
 ros::Subscriber optitrack_leader_sub_=nh_.subscribe("leader_topic", 1, hasReceivedLeaderState);
 ros::Subscriber optitrack_gesture_marker_sub_=nh_.subscribe("gesture_marker_pose_topic", 1, hasReceivedModelState);
 ros::Publisher takeoff_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/takeoff",1);
@@ -124,7 +137,7 @@ ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
 
 	while (ros::ok()){
 	// add the gesture detected to the gestures queue
-	gesture_detected = gesture_detector();
+	gesture_detected = gesture_detector(height);
 	gestures_buffer(gesture_detected);
    	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.
     	rate.sleep();
