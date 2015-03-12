@@ -12,10 +12,13 @@
 #include <optitrack_msgs/RigidBodyData.h>
 #include <optitrack_msgs/RigidBodies.h>
 #include <drone_control_msgs/send_control_data.h>
+#include <drone_control_msgs/demo_info.h>
 # define PI           3.14159265358979323846
 
-// Define de gesturetype variable
-enum gesturestype{NON_GESTURE,HOVERING,TAKEOFF,LAND,FOLLOWME};
+// Defining de gesturetype and drone_state varibles
+enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLLOWME_GESTURE};
+enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER};
+
 // Some global variables
 std::vector<double> gesture_marker_info (4,0), leader_info(4,0), LeaderFrame(2,0), GestureMarkerFrame(2,0); 
 std::vector<float> quaternion (4,0);
@@ -31,9 +34,7 @@ double quaternion2angles(std::vector<float> &quaternion){
 return Dyaw;
 }
 
-
 // Callbacks Definition
-
 void hasReceivedLeaderState(const drone_control_msgs::send_control_data::ConstPtr& msg){
 	
 	// Obtaining leader info 
@@ -60,6 +61,7 @@ void hasReceivedModelState(const geometry_msgs::PoseStamped::ConstPtr& msg){
   return;
 } 
 
+// Functions
 void WorldToLeaderframe(double angle){
 
 	angle=(PI*angle)/180;
@@ -74,22 +76,26 @@ gesturestype gesture_detector(double height){
 	double shoulder_height, arm_longitud;
 	shoulder_height = height*(7/8);
 	arm_longitud = height*(4/9);
+	gesturestype gesture_out;
+
+	WorldToLeaderframe(leader_info[3]);
 
 	// LAND CONDITION
-	gesturestype gesture_out;
 	if (gesture_marker_info[2] < 0.2)
-		gesture_out = LAND;
-	// HOVERING CONDITION
+		gesture_out = LAND_GESTURE;
+	// HOVERING CONDITION (angle, altitude, x position)
 	else if(gesture_marker_info[3] >= leader_info[3]-20 && gesture_marker_info[3] <= leader_info[3]+20 && 
-	gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1)
-		gesture_out = HOVERING;
+		gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1 &&
+		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.1 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.1)
+		gesture_out = HOVERING_GESTURE;
 	// TAKEOFF FOLLOWME
-	else if (gesture_marker_info[2] > leader_info[3]+0.1)
-		gesture_out = FOLLOWME;
-	// TAKEOFF CONDITION
+	else if (gesture_marker_info[2] > leader_info[3]+0.2)
+		gesture_out = FOLLOWME_GESTURE;
+	// TAKEOFF CONDITION (angle, altitude, y position)
 	else if(gesture_marker_info[3] >= leader_info[3]-110 && gesture_marker_info[3] <= leader_info[3]-70 && 
-	gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1)
-		gesture_out = TAKEOFF;
+		gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1 &&
+		GestureMarkerFrame[1] >= LeaderFrame[1]-arm_longitud-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]-arm_longitud+0.1)
+		gesture_out = TAKEOFF_GESTURE;
 	else
 		gesture_out = NON_GESTURE;
 
@@ -98,11 +104,12 @@ gesturestype gesture_detector(double height){
 }
 
 void gestures_buffer(gesturestype gesture_detected){
+	// This deque works from the front to back (0 to 24)
 	gestures_queue.pop_back();
 	gestures_queue.push_front(gesture_detected);
 }
 
-double find_gesture(int begin, int end, int search_gesture){
+double find_gesture(int begin, int end, gesturestype search_gesture){
 
 	int count = 0;
 	if (begin>end)	{	
@@ -119,33 +126,84 @@ double find_gesture(int begin, int end, int search_gesture){
 	return out;
 }
 
-void drone_state(){
+void drone_status(drone_state &current_state){
+
+	switch (current_state) {
+		case LANDED:  
+			if (find_gesture(0,9,TAKEOFF_GESTURE)>=90)
+				current_state = HOVERING;
+			else
+				current_state = LANDED;  
+			break;
+		case HOVERING:  
+			if (find_gesture(0,9,FOLLOWME_GESTURE)>=90)
+				current_state = FOLLOWING_LEADER;
+			else if (find_gesture(0,9,LAND_GESTURE)>=90)
+				current_state = LANDED;
+			else
+				current_state = HOVERING;
+			break;
+		case FOLLOWING_LEADER: 
+			if (find_gesture(0,9,HOVERING_GESTURE)>=90)
+				current_state = HOVERING;
+			else if (find_gesture(0,9,LAND_GESTURE)>=90)
+				current_state = LANDED;
+			else
+				current_state = FOLLOWING_LEADER;
+			break;
+	  }
 }
 
-		
 int main(int argc, char** argv){
     
 ros::init(argc, argv, "optitrack_gestures_demo");
 ros::NodeHandle nh_;
 ros::Rate rate(20.0);
 
+// Map declarations
+std::map<gesturestype,std::string> gestures;
+	// Map definition
+	gestures[NON_GESTURE]="non_gesture_detected";
+	gestures[HOVERING_GESTURE] = "hovering";
+	gestures[TAKEOFF_GESTURE]="takeoff";
+    	gestures[LAND_GESTURE]="land";
+    	gestures[FOLLOWME_GESTURE]="follow_me";
+
+std::map<drone_state,std::string> status;
+	// Map definition 
+	status[LANDED]="landed";
+	status[HOVERING] = "hovering";
+	status[FOLLOWING_LEADER]="following_leader";
+
+// Variablas declaration 
 std_msgs::Empty GestureMsg;
+drone_control_msgs::demo_info data_out;
 gesturestype gesture_detected = NON_GESTURE;
-
-
-//Physical data
+drone_state current_state = LANDED;
+//Physical user data
 double height;
 nh_.getParam("/gestures_node/leader_height",height);
 
+// Publishers and subscribers
 ros::Subscriber optitrack_leader_sub_=nh_.subscribe("leader_topic", 1, hasReceivedLeaderState);
 ros::Subscriber optitrack_gesture_marker_sub_=nh_.subscribe("gesture_marker_pose_topic", 1, hasReceivedModelState);
+ros::Publisher demo_info_pub_=nh_.advertise<drone_control_msgs::demo_info>("demo_info_topic",1);
 ros::Publisher takeoff_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/takeoff",1);
 ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
 
+	
+	// Main loop
 	while (ros::ok()){
 	// add the gesture detected to the gestures queue
 	gesture_detected = gesture_detector(height);
 	gestures_buffer(gesture_detected);
+	drone_status(current_state);
+
+	// Publishing process
+	data_out.gesture_detected = gesture_detected;
+	data_out.demo_status = current_state;
+	demo_info_pub_.publish(data_out);
+
    	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.
     	rate.sleep();
     	}
