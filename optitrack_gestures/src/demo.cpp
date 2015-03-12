@@ -145,12 +145,12 @@ double find_gesture(int begin, int end, gesturestype search_gesture){
 				count++;
 			}
 	}
-	double out =  count*100/(begin-end+1);
+	double out =  count*100/(end-begin+1);
 	return out;
 }
 
 void drone_status(drone_state &current_state){
-
+	
 	switch (current_state) {
 		case LANDED:  
 			if (find_gesture(0,9,TAKEOFF_GESTURE)>=90)
