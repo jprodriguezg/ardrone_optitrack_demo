@@ -9,6 +9,7 @@
 #include <tf/LinearMath/Quaternion.h>
 #include <optitrack_msgs/RigidBodyData.h>
 #include <optitrack_msgs/RigidBodies.h>
+#include <drone_control_msgs/demo_info.h>
 #include <drone_control_msgs/send_control_data.h>
 # define PI           3.14159265358979323846
 
@@ -17,6 +18,7 @@
 drone_control_msgs::send_control_data leader_publish_data;
 std::vector<double> Leader_info (4,0), virtual_fence (5), ant_pose(4,0), initial_pose(4,0); 
 std::vector<float> leader_quaternion (4,0); 
+std::string drone_status;
 int marker_id = 1.0, leader_id =2.0, ant_leader_id =2.0; 
 
 double quaternion2angles(std::vector<float> &quaternion){
@@ -52,10 +54,15 @@ void hasReceivedLeaderState(const optitrack_msgs::RigidBodies::ConstPtr& msg){
   return;
 } 
 
+void hasReceivedDemoinfo(const drone_control_msgs::demo_info::ConstPtr& msg){
+	drone_status = msg->demo_status;
+	return;
+}
 
+// Defining Functions
 void follow_leader(){
-
-	// x position control
+	// Conditions to avoid that drone goes out of fence
+	// x position control 
 	if (Leader_info[0]>virtual_fence[0]-0.1)
 		leader_publish_data.position.x = virtual_fence[0]-0.1;
 	else if (Leader_info[0]<virtual_fence[1]+0.1)
@@ -91,25 +98,24 @@ ros::NodeHandle nh_;
 ros::Rate rate(20.0);
 
 ros::Subscriber optitrack_sub_=nh_.subscribe("leader_pose_topic", 1, hasReceivedLeaderState);
+ros::Subscriber optitrack_demo_node_sub_=nh_.subscribe("demo_node_topic", 1, hasReceivedDemoinfo);
 ros::Publisher leader_info_pub_=nh_.advertise<drone_control_msgs::send_control_data>("leader_info_topic", 1);
 
 nh_.getParam("/drone_target_points/initial_pose",initial_pose);
-ant_pose[0] = initial_pose[0];
-ant_pose[1] = initial_pose[1];
-ant_pose[2] = initial_pose[2];
-ant_pose[3] = initial_pose[3];
+ant_pose = initial_pose;
 
 	while (ros::ok()){
 
 	nh_.getParam("/drone_control_node/virtual_fence",virtual_fence);
 	nh_.getParam("/drone_target_points/leader_id",leader_id);
 	
-	if (Leader_info[0]){
+	if (Leader_info[0] && drone_status!="hovering"){
 		follow_leader();
+		ant_pose =Leader_info; /*
 		ant_pose[0]=Leader_info[0];
 		ant_pose[1]=Leader_info[1];
 		ant_pose[2]=Leader_info[2];
-		ant_pose[3]=Leader_info[3];
+		ant_pose[3]=Leader_info[3];*/
 		}
 	else {
 		leader_publish_data.position.x=ant_pose[0];
