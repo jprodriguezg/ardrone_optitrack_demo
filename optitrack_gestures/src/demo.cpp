@@ -13,7 +13,10 @@
 #include <optitrack_msgs/RigidBodies.h>
 #include <drone_control_msgs/send_control_data.h>
 #include <drone_control_msgs/demo_info.h>
+#include <drone_control_msgs/drone_control_info.h>
 # define PI           3.14159265358979323846
+
+drone_control_msgs::drone_control_info publish_data;
 
 // Defining de gesturetype and drone_state varibles
 enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLLOWME_GESTURE};
@@ -43,6 +46,11 @@ void hasReceivedLeaderState(const drone_control_msgs::send_control_data::ConstPt
 	leader_info[2] = msg->position.z;
 	leader_info[3] = msg->yaw;
 
+	publish_data.position.x = leader_info[0];
+	publish_data.position.y = leader_info[1];
+	publish_data.position.z = leader_info[2];
+	publish_data.yaw = leader_info[3];
+
   return;
 } 
 
@@ -58,6 +66,12 @@ void hasReceivedModelState(const geometry_msgs::PoseStamped::ConstPtr& msg){
 	quaternion[3] = msg->pose.orientation.w;
 	gesture_marker_info[3] = quaternion2angles(quaternion);
 
+	// Publishing info 
+	publish_data.targetYaw = gesture_marker_info[3];
+	publish_data.target.x = gesture_marker_info[0];
+	publish_data.target.y = gesture_marker_info[1];
+	publish_data.target.z = gesture_marker_info[2];
+
   return;
 } 
 
@@ -69,13 +83,22 @@ void WorldToLeaderframe(double angle){
 	LeaderFrame[1]=-sin(angle)*leader_info[0]+cos(angle)*leader_info[1];
 	GestureMarkerFrame[0]=cos(angle)*gesture_marker_info[0]+sin(angle)*gesture_marker_info[1];
 	GestureMarkerFrame[1]=-sin(angle)*gesture_marker_info[0]+cos(angle)*gesture_marker_info[1];
+
+	publish_data.framePosition.x=LeaderFrame[0];
+	publish_data.framePosition.y=LeaderFrame[1];
+	publish_data.framePosition.z=leader_info[2];
+	publish_data.frameTarget.x=GestureMarkerFrame[0];
+	publish_data.frameTarget.y=GestureMarkerFrame[1];
+	publish_data.frameTarget.z=gesture_marker_info[2];
 }
 
 gesturestype gesture_detector(double height){
 	
 	double shoulder_height, arm_longitud;
-	shoulder_height = height*(7/8);
-	arm_longitud = height*(4/9);
+	//shoulder_height = height*(7/8);
+	//arm_longitud = height*(4/9);
+	shoulder_height = 1.55;
+	arm_longitud = 0.6;
 	gesturestype gesture_out;
 
 	WorldToLeaderframe(leader_info[3]);
@@ -83,18 +106,18 @@ gesturestype gesture_detector(double height){
 	// LAND CONDITION
 	if (gesture_marker_info[2] < 0.2)
 		gesture_out = LAND_GESTURE;
-	// HOVERING CONDITION (angle, altitude, x position)
-	else if(gesture_marker_info[3] >= leader_info[3]-20 && gesture_marker_info[3] <= leader_info[3]+20 && 
-		gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1 &&
-		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.1 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.1)
+	// HOVERING CONDITION (altitude, x position, y position)
+	else if(gesture_marker_info[2] >= shoulder_height -0.2 && gesture_marker_info[2] <= shoulder_height + 0.2 &&
+		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.2 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.2 &&
+		GestureMarkerFrame[1] >= LeaderFrame[1]-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]+0.1)
 		gesture_out = HOVERING_GESTURE;
 	// TAKEOFF FOLLOWME
-	else if (gesture_marker_info[2] > leader_info[3]+0.2)
+	else if (gesture_marker_info[2] > leader_info[2]+0.1)
 		gesture_out = FOLLOWME_GESTURE;
-	// TAKEOFF CONDITION (angle, altitude, y position)
-	else if(gesture_marker_info[3] >= leader_info[3]-110 && gesture_marker_info[3] <= leader_info[3]-70 && 
-		gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1 &&
-		GestureMarkerFrame[1] >= LeaderFrame[1]-arm_longitud-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]-arm_longitud+0.1)
+	// TAKEOFF CONDITION (altitude, y position)
+	else if(gesture_marker_info[2] >= shoulder_height -0.2 && gesture_marker_info[2] <= shoulder_height + 0.2 &&
+		GestureMarkerFrame[0] >= LeaderFrame[0]-0.15 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.15 &&
+		GestureMarkerFrame[1] >= LeaderFrame[1]+arm_longitud-0.2 && GestureMarkerFrame[1] <= LeaderFrame[1]+arm_longitud+0.2)
 		gesture_out = TAKEOFF_GESTURE;
 	else
 		gesture_out = NON_GESTURE;
@@ -185,11 +208,12 @@ double height;
 nh_.getParam("/gestures_node/leader_height",height);
 
 // Publishers and subscribers
-ros::Subscriber optitrack_leader_sub_=nh_.subscribe("leader_topic", 1, hasReceivedLeaderState);
+ros::Subscriber optitrack_leader_sub_=nh_.subscribe("leader_pose_topic", 1, hasReceivedLeaderState);
 ros::Subscriber optitrack_gesture_marker_sub_=nh_.subscribe("gesture_marker_pose_topic", 1, hasReceivedModelState);
 ros::Publisher demo_info_pub_=nh_.advertise<drone_control_msgs::demo_info>("demo_info_topic",1);
 ros::Publisher takeoff_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/takeoff",1);
 ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
+ros::Publisher drone_info_pub_=nh_.advertise<drone_control_msgs::drone_control_info>("/demo_bodies_info", 1);
 
 	
 	// Main loop
@@ -203,6 +227,7 @@ ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
 	data_out.gesture_detected = gestures[gesture_detected];
 	data_out.demo_status = status[current_state];
 	demo_info_pub_.publish(data_out);
+	drone_info_pub_.publish(publish_data);
 
    	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.
     	rate.sleep();

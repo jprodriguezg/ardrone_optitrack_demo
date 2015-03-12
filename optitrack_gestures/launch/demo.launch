@@ -3,6 +3,7 @@
 
 	<node name="gestures_node" pkg="optitrack_gestures" type="optitrack_gestures_demo" output="screen">
 		<remap from="gesture_marker_pose_topic"  to="/optitrack/gesture_marker"/>
+		<remap from="leader_pose_topic"  to="/drone_target_points"/>
 		<remap from="demo_info_topic"  to="/demo"/>
 		<param name="leader_height" value="1.8"/>		
 		<rosparam>gestures_def:  [0.25, 2.0]</rosparam>  <!-- [land altitude, takeoff altitude] -->
