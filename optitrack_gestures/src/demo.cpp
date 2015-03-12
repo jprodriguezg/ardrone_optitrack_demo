@@ -200,8 +200,8 @@ ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
 	drone_status(current_state);
 
 	// Publishing process
-	data_out.gesture_detected = gesture_detected;
-	data_out.demo_status = current_state;
+	data_out.gesture_detected = gestures[gesture_detected];
+	data_out.demo_status = status[current_state];
 	demo_info_pub_.publish(data_out);
 
    	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.
