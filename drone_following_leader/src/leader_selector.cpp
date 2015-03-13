@@ -13,10 +13,8 @@
 #include <drone_control_msgs/send_control_data.h>
 # define PI           3.14159265358979323846
 
-
 // Some global variables
 drone_control_msgs::send_control_data leader_publish_data;
-std::vector<double> Leader_info (4,0), virtual_fence (5), ant_pose(4,0), initial_pose(4,0); 
 std::vector<float> leader_quaternion (4,0); 
 int marker_id = 1.0, leader_id =0.0, ant_leader_id =0.0; 
 
@@ -40,80 +38,31 @@ void hasReceivedLeaderState(const optitrack_msgs::RigidBodies::ConstPtr& msg){
 		}
 	}
 	
-  	Leader_info[0] = msg->rigid_bodies[marker_id].pose.position.x; 
-	Leader_info[1] = msg->rigid_bodies[marker_id].pose.position.y;
-	Leader_info[2] = msg->rigid_bodies[marker_id].pose.position.z;
+  	leader_publish_data.position.x = msg->rigid_bodies[marker_id].pose.position.x; 
+	leader_publish_data.position.y = msg->rigid_bodies[marker_id].pose.position.y;
+	leader_publish_data.position.z = msg->rigid_bodies[marker_id].pose.position.z;
 	leader_quaternion[0] = msg->rigid_bodies[marker_id].pose.orientation.x;
 	leader_quaternion[1] = msg->rigid_bodies[marker_id].pose.orientation.y;
 	leader_quaternion[2] = msg->rigid_bodies[marker_id].pose.orientation.z;
 	leader_quaternion[3] = msg->rigid_bodies[marker_id].pose.orientation.w;
-	Leader_info[3] = quaternion2angles(leader_quaternion);
+	leader_publish_data.yaw = quaternion2angles(leader_quaternion);
 	ant_leader_id = leader_id;
 
   return;
 } 
 
-// Defining Functions
-void follow_leader(){
-	// Conditions to avoid that drone goes out of fence
-	// x position control 
-	if (Leader_info[0]>virtual_fence[0]-0.1)
-		leader_publish_data.position.x = virtual_fence[0]-0.1;
-	else if (Leader_info[0]<virtual_fence[1]+0.1)
-		leader_publish_data.position.x = virtual_fence[1]+0.1;
-	else	
-		leader_publish_data.position.x = Leader_info[0];
 
-	// y position control
-	if (Leader_info[1]>virtual_fence[2]-0.1)
-		leader_publish_data.position.y = virtual_fence[2]-0.1;
-	else if (Leader_info[1]<virtual_fence[3]+0.1)
-		leader_publish_data.position.y = virtual_fence[3]+0.1;
-	else	
-		leader_publish_data.position.y = Leader_info[1];
-	
-	// z control
-	if (Leader_info[2]<0.3)
-		leader_publish_data.position.z = 0.3;
-	else if (Leader_info[2]>virtual_fence[4]-0.1)
-		leader_publish_data.position.z = virtual_fence[4]-0.1;
-	else	
-		leader_publish_data.position.z = Leader_info[2];
-
-	// yaw control
-	leader_publish_data.yaw = Leader_info[3];
-
-return;
-}	
 int main(int argc, char** argv){
     
-ros::init(argc, argv, "following_leader_node");
+ros::init(argc, argv, "leader_selector_node");
 ros::NodeHandle nh_;
 ros::Rate rate(20.0);
 
-ros::Subscriber optitrack_sub_=nh_.subscribe("leader_pose_topic", 1, hasReceivedLeaderState);
+ros::Subscriber optitrack_sub_=nh_.subscribe("rigied_bodies_topic", 1, hasReceivedLeaderState);
 ros::Publisher leader_info_pub_=nh_.advertise<drone_control_msgs::send_control_data>("leader_info_topic", 1);
 
-nh_.getParam("/drone_target_points/initial_pose",initial_pose);
-ant_pose = initial_pose;
-
 	while (ros::ok()){
-
-	nh_.getParam("/drone_control_node/virtual_fence",virtual_fence);
 	nh_.getParam("/drone_target_points/leader_id",leader_id);
-	
-	if (Leader_info[0] ){
-		follow_leader();
-		ant_pose =Leader_info;
-		}
-	else {
-		leader_publish_data.position.x=ant_pose[0];
-		leader_publish_data.position.y=ant_pose[1];
-		leader_publish_data.position.z=ant_pose[2];
-		leader_publish_data.yaw=ant_pose[3];
-		}
-
-	// Publishing target info
 	leader_info_pub_.publish(leader_publish_data);	
    	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.
     	rate.sleep();

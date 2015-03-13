@@ -11,7 +11,7 @@
 #include <optitrack_msgs/RigidBodyData.h>
 #include <optitrack_msgs/RigidBodies.h>
 #include <ardrone_autonomy/Navdata.h>
-#include "ardrone_autonomy/LedAnim.h"
+#include <ardrone_autonomy/LedAnim.h>
 #include <drone_control_msgs/drone_control_info.h>
 #include <drone_control_msgs/send_control_data.h>
 # define PI 3.14159265358979323846
@@ -20,7 +20,7 @@
 
 geometry_msgs::Twist velocityMsg;
 drone_control_msgs::drone_control_info publish_data;
-double errorAntPitch, errorAntRoll, VxDrone, VyDrone, DroneBattery;
+double errorAntPitch, errorAntRoll, VxDrone, VyDrone;
 std::vector<double> PointsDroneFrame(4,0), Drone_info(4,0), Target_point_info(4,0),virtual_fence (5); // [maxX, minX, maxY, minY, maxAltitude]
 std::vector<float> drone_quaternion (4,0); 
 
@@ -78,7 +78,6 @@ void hasReceivedNavdataInfo(const ardrone_autonomy::NavdataConstPtr msg){
     	//Drone_info[2] = (msg->altd)/1000.0;
 	VxDrone = msg->vx;
 	VyDrone = msg->vy;
-	DroneBattery = msg->batteryPercent;
 	//publish_data.DroneAltitude = Drone_info[2];
 } 
 
@@ -189,7 +188,6 @@ ros::Rate rate(20.0);
 
 double fs=20;
 std::vector<double> dPose (4,0), Kp (4,0), Kd (2,0), velocity_limit(4,0);
-int  BatteryFlag = 0;
 
 ros::Subscriber optitrack_sub_=nh_.subscribe("drone_info_topic", 10, hasReceivedModelState);
 ros::Subscriber contol_sub = nh_.subscribe("control_info", 10, hasReceivedControlInfo);
@@ -255,19 +253,6 @@ srv.request.duration = 0;
 		// ardrone must land 
 		land_pub_.publish(EmergencyMsg);
 		}
-
-	/* Led animation to alert about low battery */
-	if(DroneBattery <= 20 && DroneBattery > 10 && BatteryFlag == 0){
-		srv.request.type = 0;  //BLINK_GREEN_RED
-		drone_led.call(srv);
-		BatteryFlag = 1;
-	}
-	else if(DroneBattery <= 10 && BatteryFlag == 1){
-		srv.request.type = 2; // BLINK_RED
-		drone_led.call(srv);
-		BatteryFlag = 0;
-	}
-		
 	
    	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.
     	rate.sleep();

@@ -13,45 +13,26 @@
 #include <drone_control_msgs/send_control_data.h>
 # define PI           3.14159265358979323846
 
-
 // Some global variables
 drone_control_msgs::send_control_data leader_publish_data;
 std::vector<double> Leader_info (4,0), virtual_fence (5), ant_pose(4,0), initial_pose(4,0); 
-std::vector<float> leader_quaternion (4,0); 
-int marker_id = 1.0, leader_id =0.0, ant_leader_id =0.0; 
-
-double quaternion2angles(std::vector<float> &quaternion){
-	double roll, pitch, yaw, Dyaw;
-	tf::Quaternion quat(quaternion[0], quaternion[1], quaternion[2], quaternion[3]);
-	tf::Matrix3x3 m(quat);
-	m.getRPY(roll, pitch, yaw );
-	Dyaw=(double)(yaw*180)/PI;
-
-return Dyaw;
-}
+std::string drone_status;
 
 // Define callbacks 
-void hasReceivedLeaderState(const optitrack_msgs::RigidBodies::ConstPtr& msg){
+void hasReceivedLeaderState(const drone_control_msgs::send_control_data::ConstPtr& msg){
 	
-	if (leader_id != ant_leader_id){
-		for (int i=0; i<=msg->rigid_bodies.size(); i++){
-			if (leader_id == msg->rigid_bodies[i].id)
-			marker_id = i;
-		}
-	}
-	
-  	Leader_info[0] = msg->rigid_bodies[marker_id].pose.position.x; 
-	Leader_info[1] = msg->rigid_bodies[marker_id].pose.position.y;
-	Leader_info[2] = msg->rigid_bodies[marker_id].pose.position.z;
-	leader_quaternion[0] = msg->rigid_bodies[marker_id].pose.orientation.x;
-	leader_quaternion[1] = msg->rigid_bodies[marker_id].pose.orientation.y;
-	leader_quaternion[2] = msg->rigid_bodies[marker_id].pose.orientation.z;
-	leader_quaternion[3] = msg->rigid_bodies[marker_id].pose.orientation.w;
-	Leader_info[3] = quaternion2angles(leader_quaternion);
-	ant_leader_id = leader_id;
-
+	// Obtaining leader info 
+  	Leader_info[0] = msg->position.x; 
+	Leader_info[1] = msg->position.y;
+	Leader_info[2] = msg->position.z;
+	Leader_info[3] = msg->yaw;
   return;
 } 
+
+void hasReceivedDemoinfo(const drone_control_msgs::demo_info::ConstPtr& msg){
+	drone_status = msg->demo_status;
+	return;
+}
 
 // Defining Functions
 void follow_leader(){
@@ -87,12 +68,13 @@ return;
 }	
 int main(int argc, char** argv){
     
-ros::init(argc, argv, "following_leader_node");
+ros::init(argc, argv, "leader_desired_position_node");
 ros::NodeHandle nh_;
 ros::Rate rate(20.0);
 
-ros::Subscriber optitrack_sub_=nh_.subscribe("leader_pose_topic", 1, hasReceivedLeaderState);
-ros::Publisher leader_info_pub_=nh_.advertise<drone_control_msgs::send_control_data>("leader_info_topic", 1);
+ros::Subscriber leader_info_sub_=nh_.subscribe("leader_info_topic", 1, hasReceivedLeaderState);
+ros::Subscriber optitrack_demo_node_sub_=nh_.subscribe("demo_node_topic", 1, hasReceivedDemoinfo);
+ros::Publisher leader_info_pub_=nh_.advertise<drone_control_msgs::send_control_data>("desired_leader_position_topic", 1);
 
 nh_.getParam("/drone_target_points/initial_pose",initial_pose);
 ant_pose = initial_pose;
@@ -100,16 +82,15 @@ ant_pose = initial_pose;
 	while (ros::ok()){
 
 	nh_.getParam("/drone_control_node/virtual_fence",virtual_fence);
-	nh_.getParam("/drone_target_points/leader_id",leader_id);
 	
-	if (Leader_info[0] ){
+	if (Leader_info[0] && drone_status =="following_leader"){
 		follow_leader();
 		ant_pose =Leader_info;
 		}
 	else {
 		leader_publish_data.position.x=ant_pose[0];
 		leader_publish_data.position.y=ant_pose[1];
-		leader_publish_data.position.z=ant_pose[2];
+		leader_publish_data.position.z = 1.0;
 		leader_publish_data.yaw=ant_pose[3];
 		}
 

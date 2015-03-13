@@ -16,8 +16,6 @@
 #include <drone_control_msgs/drone_control_info.h>
 # define PI           3.14159265358979323846
 
-drone_control_msgs::drone_control_info publish_data;
-
 // Defining de gesturetype and drone_state varibles
 enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLLOWME_GESTURE};
 enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER};
@@ -25,7 +23,7 @@ enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER};
 // Some global variables
 std::vector<double> gesture_marker_info (4,0), leader_info(4,0), LeaderFrame(2,0), GestureMarkerFrame(2,0); 
 std::vector<float> quaternion (4,0);
-std::deque<double> gestures_queue (25,NON_GESTURE);
+std::deque<gesturestype> gestures_queue (40,NON_GESTURE);
 
 double quaternion2angles(std::vector<float> &quaternion){
 	double roll, pitch, yaw, Dyaw;
@@ -45,14 +43,9 @@ void hasReceivedLeaderState(const drone_control_msgs::send_control_data::ConstPt
 	leader_info[1] = msg->position.y;
 	leader_info[2] = msg->position.z;
 	leader_info[3] = msg->yaw;
-
-	publish_data.position.x = leader_info[0];
-	publish_data.position.y = leader_info[1];
-	publish_data.position.z = leader_info[2];
-	publish_data.yaw = leader_info[3];
-
   return;
 } 
+
 
 void hasReceivedModelState(const geometry_msgs::PoseStamped::ConstPtr& msg){
 	
@@ -66,12 +59,6 @@ void hasReceivedModelState(const geometry_msgs::PoseStamped::ConstPtr& msg){
 	quaternion[3] = msg->pose.orientation.w;
 	gesture_marker_info[3] = quaternion2angles(quaternion);
 
-	// Publishing info 
-	publish_data.targetYaw = gesture_marker_info[3];
-	publish_data.target.x = gesture_marker_info[0];
-	publish_data.target.y = gesture_marker_info[1];
-	publish_data.target.z = gesture_marker_info[2];
-
   return;
 } 
 
@@ -83,13 +70,6 @@ void WorldToLeaderframe(double angle){
 	LeaderFrame[1]=-sin(angle)*leader_info[0]+cos(angle)*leader_info[1];
 	GestureMarkerFrame[0]=cos(angle)*gesture_marker_info[0]+sin(angle)*gesture_marker_info[1];
 	GestureMarkerFrame[1]=-sin(angle)*gesture_marker_info[0]+cos(angle)*gesture_marker_info[1];
-
-	publish_data.framePosition.x=LeaderFrame[0];
-	publish_data.framePosition.y=LeaderFrame[1];
-	publish_data.framePosition.z=leader_info[2];
-	publish_data.frameTarget.x=GestureMarkerFrame[0];
-	publish_data.frameTarget.y=GestureMarkerFrame[1];
-	publish_data.frameTarget.z=gesture_marker_info[2];
 }
 
 gesturestype gesture_detector(double height){
@@ -102,21 +82,19 @@ gesturestype gesture_detector(double height){
 	gesturestype gesture_out;
 
 	WorldToLeaderframe(leader_info[3]);
-
 	// LAND CONDITION
 	if (gesture_marker_info[2] < 0.2)
 		gesture_out = LAND_GESTURE;
-	// HOVERING CONDITION (altitude, x position, y position)
-	else if(gesture_marker_info[2] >= shoulder_height -0.2 && gesture_marker_info[2] <= shoulder_height + 0.2 &&
-		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.2 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.2 &&
-		GestureMarkerFrame[1] >= LeaderFrame[1]-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]+0.1)
-		gesture_out = HOVERING_GESTURE;
 	// TAKEOFF FOLLOWME
 	else if (gesture_marker_info[2] > leader_info[2]+0.1)
 		gesture_out = FOLLOWME_GESTURE;
+	// HOVERING CONDITION (altitude, x position, y position)
+	else if(gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1 &&
+		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.2 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.2 			&& GestureMarkerFrame[1] >= LeaderFrame[1]-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]+0.1)
+		gesture_out = HOVERING_GESTURE;
 	// TAKEOFF CONDITION (altitude, y position)
-	else if(gesture_marker_info[2] >= shoulder_height -0.2 && gesture_marker_info[2] <= shoulder_height + 0.2 &&
-		GestureMarkerFrame[0] >= LeaderFrame[0]-0.15 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.15 &&
+	else if(gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1 &&
+		GestureMarkerFrame[0] >= LeaderFrame[0]-0.15 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.15 && 
 		GestureMarkerFrame[1] >= LeaderFrame[1]+arm_longitud-0.2 && GestureMarkerFrame[1] <= LeaderFrame[1]+arm_longitud+0.2)
 		gesture_out = TAKEOFF_GESTURE;
 	else
@@ -145,7 +123,7 @@ double find_gesture(int begin, int end, gesturestype search_gesture){
 				count++;
 			}
 	}
-	double out =  count*100/(end-begin+1);
+	double out =  count*double(100)/(end-begin+1);
 	return out;
 }
 
@@ -154,7 +132,7 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 	std_msgs::Empty EmptyMsg;
 	switch (current_state) {
 		case LANDED:  
-			if (find_gesture(0,9,TAKEOFF_GESTURE)>=90){
+			if (find_gesture(0,20,TAKEOFF_GESTURE)>=90){
 				current_state = HOVERING;
 				takeoff.publish(EmptyMsg);
 				}
@@ -162,9 +140,9 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 				current_state = LANDED;  
 			break;
 		case HOVERING:  
-			if (find_gesture(0,9,FOLLOWME_GESTURE)>=90)
+			if (find_gesture(0,20,FOLLOWME_GESTURE)>=90)
 				current_state = FOLLOWING_LEADER;
-			else if (find_gesture(0,9,LAND_GESTURE)>=90){
+			else if (find_gesture(0,20,LAND_GESTURE)>=90){
 				current_state = LANDED;
 				land.publish(EmptyMsg);
 				}
@@ -172,9 +150,9 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 				current_state = HOVERING;
 			break;
 		case FOLLOWING_LEADER: 
-			if (find_gesture(0,9,HOVERING_GESTURE)>=90)
+			if (find_gesture(0,20,HOVERING_GESTURE)>=90)
 				current_state = HOVERING;
-			else if (find_gesture(0,9,LAND_GESTURE)>=90){
+			else if (find_gesture(0,20,LAND_GESTURE)>=90){
 				current_state = LANDED;
 				land.publish(EmptyMsg);
 				}
