@@ -149,28 +149,35 @@ double find_gesture(int begin, int end, gesturestype search_gesture){
 	return out;
 }
 
-void drone_status(drone_state &current_state){
-	
+void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publisher &land){
+
+	std_msgs::Empty EmptyMsg;
 	switch (current_state) {
 		case LANDED:  
-			if (find_gesture(0,9,TAKEOFF_GESTURE)>=90)
+			if (find_gesture(0,9,TAKEOFF_GESTURE)>=90){
 				current_state = HOVERING;
+				takeoff.publish(EmptyMsg);
+				}
 			else
 				current_state = LANDED;  
 			break;
 		case HOVERING:  
 			if (find_gesture(0,9,FOLLOWME_GESTURE)>=90)
 				current_state = FOLLOWING_LEADER;
-			else if (find_gesture(0,9,LAND_GESTURE)>=90)
+			else if (find_gesture(0,9,LAND_GESTURE)>=90){
 				current_state = LANDED;
+				land.publish(EmptyMsg);
+				}
 			else
 				current_state = HOVERING;
 			break;
 		case FOLLOWING_LEADER: 
 			if (find_gesture(0,9,HOVERING_GESTURE)>=90)
 				current_state = HOVERING;
-			else if (find_gesture(0,9,LAND_GESTURE)>=90)
+			else if (find_gesture(0,9,LAND_GESTURE)>=90){
 				current_state = LANDED;
+				land.publish(EmptyMsg);
+				}
 			else
 				current_state = FOLLOWING_LEADER;
 			break;
@@ -199,7 +206,7 @@ std::map<drone_state,std::string> status;
 	status[FOLLOWING_LEADER]="following_leader";
 
 // Variablas declaration 
-std_msgs::Empty GestureMsg;
+
 drone_control_msgs::demo_info data_out;
 gesturestype gesture_detected = NON_GESTURE;
 drone_state current_state = LANDED;
@@ -213,7 +220,6 @@ ros::Subscriber optitrack_gesture_marker_sub_=nh_.subscribe("gesture_marker_pose
 ros::Publisher demo_info_pub_=nh_.advertise<drone_control_msgs::demo_info>("demo_info_topic",1);
 ros::Publisher takeoff_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/takeoff",1);
 ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
-ros::Publisher drone_info_pub_=nh_.advertise<drone_control_msgs::drone_control_info>("/demo_bodies_info", 1);
 
 	
 	// Main loop
@@ -221,13 +227,12 @@ ros::Publisher drone_info_pub_=nh_.advertise<drone_control_msgs::drone_control_i
 	// add the gesture detected to the gestures queue
 	gesture_detected = gesture_detector(height);
 	gestures_buffer(gesture_detected);
-	drone_status(current_state);
+	drone_status(current_state, takeoff_pub_, land_pub_);
 
-	// Publishing process
+	// Publishing node topic
 	data_out.gesture_detected = gestures[gesture_detected];
 	data_out.demo_status = status[current_state];
 	demo_info_pub_.publish(data_out);
-	drone_info_pub_.publish(publish_data);
 
    	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.
     	rate.sleep();
