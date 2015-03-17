@@ -7,6 +7,7 @@
 #include <ardrone_autonomy/Navdata.h>
 #include <ardrone_autonomy/LedAnim.h>
 #include <drone_control_msgs/demo_info.h>
+#include <sound_play/SoundRequest.h>
 
 std::string drone_status, ant_status ="non_gesture_detected";
 double DroneBattery;
@@ -31,13 +32,14 @@ ros::Rate rate(20.0);
 ros::Subscriber optitrack_demo_node_sub_=nh_.subscribe("demo_node_topic", 1, hasReceivedDemoinfo);
 ros::Subscriber alt_sub = nh_.subscribe("/ardrone/navdata", 10, hasReceivedNavdataInfo);
 ros::ServiceClient drone_led =  nh_.serviceClient<ardrone_autonomy::LedAnim>("/ardrone/setledanimation");
+ros::Publisher sound_pub_=nh_.advertise<sound_play::SoundRequest>("output_sound", 1);
 
 
 int BatteryFlag = 0, fs=20;
 /* Difinition of the led animation parameters */
 ardrone_autonomy::LedAnim srv;
 srv.request.freq = fs/5;
-
+sound_play::SoundRequest sound_out;
 
 	while (ros::ok()){
 
@@ -56,13 +58,26 @@ srv.request.freq = fs/5;
 	}
 
 	else if(drone_status != ant_status){
+
+		// Led status feedback
 		srv.request.duration = 3;
 		srv.request.type = 4; // SNAKE_GREEN_RED
 		drone_led.call(srv);
+
+		// Sound status feedback
+			if (drone_status == "landed")
+				sound_out.arg = "Landing";
+			else if(drone_status == "hovering")
+				sound_out.arg = "Hovering";
+			else if(drone_status == "following_leader")
+				sound_out.arg = "Following Leader";
+
+		sound_out.sound = -3;
+		sound_out.command = 1;
+		sound_pub_.publish(sound_out);
+
 		ant_status = drone_status;
 		}
-		
-	
 		
    	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.
     	rate.sleep();

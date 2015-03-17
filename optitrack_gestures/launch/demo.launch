@@ -1,10 +1,13 @@
 <!-- --> 
 <launch>
 
-	<node name="drone_feedback_signals_node" pkg="drone_feedback_signals" type="feedback_signals_node" output="screen">
-		<remap from="demo_node_topic"  to="/demo"/>		
-	</node>
+  	<node name="soundplay_node" pkg="sound_play" type="soundplay_node.py"/>
 
+	<node name="drone_feedback_signals_node" pkg="drone_feedback_signals" type="feedback_signals_node" output="screen">
+		<remap from="demo_node_topic"  to="/demo"/>
+		<remap from="output_sound"  to="/robotsound"/>		
+	</node>
+	
 	<node name="gestures_node" pkg="optitrack_gestures" type="optitrack_gestures_demo" output="screen">
 		<remap from="gesture_marker_pose_topic"  to="/optitrack/gesture_marker"/>
 		<remap from="leader_pose_topic"  to="/leader_info_topic"/>
