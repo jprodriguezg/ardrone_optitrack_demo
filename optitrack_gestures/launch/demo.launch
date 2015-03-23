@@ -6,7 +6,11 @@
 	<node name="drone_feedback_signals_node" pkg="drone_feedback_signals" type="feedback_signals_node" output="screen">
 		<remap from="demo_node_topic"  to="/demo"/>
 		<remap from="output_sound"  to="/robotsound"/>		
+		<param name="landed_sound" value="$(find drone_feedback_signals)/sounds/landed.wav"/>
+		<param name="hovering_sound" value="$(find drone_feedback_signals)/sounds/hovering.wav"/>
+		<param name="following_sound" value="$(find drone_feedback_signals)/sounds/following.wav"/>
 	</node>
+
 	
 	<node name="gestures_node" pkg="optitrack_gestures" type="optitrack_gestures_demo" output="screen">
 		<remap from="gesture_marker_pose_topic"  to="/optitrack/gesture_marker"/>

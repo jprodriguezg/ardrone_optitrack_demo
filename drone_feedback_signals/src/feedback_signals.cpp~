@@ -41,6 +41,11 @@ ardrone_autonomy::LedAnim srv;
 srv.request.freq = fs/5;
 sound_play::SoundRequest sound_out;
 
+std::string learder_sound, hovering_sound, following_sound;
+nh_.getParam("/drone_feedback_signals_node/landed_sound",learder_sound);
+nh_.getParam("/drone_feedback_signals_node/hovering_sound",hovering_sound);
+nh_.getParam("/drone_feedback_signals_node/following_sound",following_sound);
+
 	while (ros::ok()){
 
 	/* Led animation to alert about low battery */
@@ -64,16 +69,18 @@ sound_play::SoundRequest sound_out;
 		srv.request.type = 4; // SNAKE_GREEN_RED
 		drone_led.call(srv);
 
+		sound_out.sound = -2;
+		sound_out.command = 1;
+
 		// Sound status feedback
 			if (drone_status == "landed")
-				sound_out.arg = "Landing";
+				sound_out.arg = learder_sound;
 			else if(drone_status == "hovering")
-				sound_out.arg = "Hovering";
+				sound_out.arg = hovering_sound;
 			else if(drone_status == "following_leader")
-				sound_out.arg = "Following Leader";
+				sound_out.arg = following_sound;
 
-		sound_out.sound = -3;
-		sound_out.command = 1;
+		
 		sound_pub_.publish(sound_out);
 
 		ant_status = drone_status;
