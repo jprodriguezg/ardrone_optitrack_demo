@@ -17,15 +17,13 @@
 # define PI           3.14159265358979323846
 
 // Defining de gesturetype and drone_state varibles
-enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLLOW_LEADER_1_GESTURE,FOLLOW_LEADER_2_GESTURE};
+enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLLOWME_GESTURE};
 enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER};
 
 // Some global variables
-std::vector<double> leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), GestureMarkerFrame(2,0); 
-std::vector<float> quaternion1 (4,0), quaternion2 (4,0);
-std::vector<float> leaders_id(2,0);  // Posible leaders ids
+std::vector<double> gesture_marker_info (4,0), leader_info(4,0), LeaderFrame(2,0), GestureMarkerFrame(2,0); 
+std::vector<float> quaternion (4,0);
 std::deque<gesturestype> gestures_queue (40,NON_GESTURE);
-int leader_id = 0;   // Global variable of leader
 
 double quaternion2angles(std::vector<float> &quaternion){
 	double roll, pitch, yaw, Dyaw;
@@ -49,33 +47,17 @@ void hasReceivedLeaderState(const drone_control_msgs::send_control_data::ConstPt
 } 
 
 
-void hasReceivedMarkerLeader1State(const geometry_msgs::PoseStamped::ConstPtr& msg){
+void hasReceivedModelState(const geometry_msgs::PoseStamped::ConstPtr& msg){
 	
 	// Obtaining gesture marker info 
-  	leader1_marker_info[0] = msg->pose.position.x; 
-	leader1_marker_info[1] = msg->pose.position.y;
-	leader1_marker_info[2] = msg->pose.position.z;
-	quaternion1[0] = msg->pose.orientation.x;
-	quaternion1[1] = msg->pose.orientation.y;
-	quaternion1[2] = msg->pose.orientation.z;
-	quaternion1[3] = msg->pose.orientation.w;
-	leader1_marker_info[3] = quaternion2angles(quaternion1);
-
-  return;
-} 
-
-
-void hasReceivedMarkerLeader2State(const geometry_msgs::PoseStamped::ConstPtr& msg){
-	
-	// Obtaining gesture marker info 
-  	leader2_marker_info[0] = msg->pose.position.x; 
-	leader2_marker_info[1] = msg->pose.position.y;
-	leader2_marker_info[2] = msg->pose.position.z;
-	quaternion2[0] = msg->pose.orientation.x;
-	quaternion2[1] = msg->pose.orientation.y;
-	quaternion2[2] = msg->pose.orientation.z;
-	quaternion2[3] = msg->pose.orientation.w;
-	leader2_marker_info[3] = quaternion2angles(quaternion2);
+  	gesture_marker_info[0] = msg->pose.position.x; 
+	gesture_marker_info[1] = msg->pose.position.y;
+	gesture_marker_info[2] = msg->pose.position.z;
+	quaternion[0] = msg->pose.orientation.x;
+	quaternion[1] = msg->pose.orientation.y;
+	quaternion[2] = msg->pose.orientation.z;
+	quaternion[3] = msg->pose.orientation.w;
+	gesture_marker_info[3] = quaternion2angles(quaternion);
 
   return;
 } 
@@ -83,21 +65,14 @@ void hasReceivedMarkerLeader2State(const geometry_msgs::PoseStamped::ConstPtr& m
 // Functions
 void WorldToLeaderframe(double angle){
 
-	
 	angle=(PI*angle)/180;
 	LeaderFrame[0]=cos(angle)*leader_info[0]+sin(angle)*leader_info[1];
 	LeaderFrame[1]=-sin(angle)*leader_info[0]+cos(angle)*leader_info[1];
-	if (leaders_id[0] == leader_id){	// Creates a new leader 1 frame
-		GestureMarkerFrame[0]=cos(angle)*leader1_marker_info[0]+sin(angle)*leader1_marker_info[1];
-		GestureMarkerFrame[1]=-sin(angle)*leader1_marker_info[0]+cos(angle)*leader1_marker_info[1];
-	}
-	else if (leaders_id[1] == leader_id){	// Creates a new leader 2 frame
-		GestureMarkerFrame[0]=cos(angle)*leader2_marker_info[0]+sin(angle)*leader2_marker_info[1];
-		GestureMarkerFrame[1]=-sin(angle)*leader2_marker_info[0]+cos(angle)*leader2_marker_info[1];
-	}
+	GestureMarkerFrame[0]=cos(angle)*gesture_marker_info[0]+sin(angle)*gesture_marker_info[1];
+	GestureMarkerFrame[1]=-sin(angle)*gesture_marker_info[0]+cos(angle)*gesture_marker_info[1];
 }
 
-gesturestype gesture_detector(double height, int id){
+gesturestype gesture_detector(double height){
 	
 	double shoulder_height, arm_longitud;
 	//shoulder_height = height*(7/8);
@@ -105,35 +80,23 @@ gesturestype gesture_detector(double height, int id){
 	shoulder_height = 1.55;
 	arm_longitud = 0.6;
 	gesturestype gesture_out;
-	double current_leader_marker_altitude = 0;
 
-	if (id == leaders_id[0])
-		current_leader_marker_altitude = leader1_marker_info[2];
-	else if ( id == leaders_id[1])
-		current_leader_marker_altitude = leader2_marker_info[2];
-
-	// Transform the leader and marker frames base on the angle of the leader
 	WorldToLeaderframe(leader_info[3]);
-
-	// LAND CONDITION  -- Controlled by both leaders
-	if (leader1_marker_info[2] < 0.2 || leader2_marker_info[2] < 0.2)
+	// LAND CONDITION
+	if (gesture_marker_info[2] < 0.2)
 		gesture_out = LAND_GESTURE;
-	// FOLLOWME CONDITION	-- Controlled by both leaders
-	else if (leader1_marker_info[2] > leader_info[2]+0.1 ||  leader2_marker_info[2] > leader_info[2]+0.1){
-		if (id == leaders_id[0]) 
-		gesture_out = FOLLOW_LEADER_1_GESTURE;
-		else if (id == leaders_id[1])
-		gesture_out = FOLLOW_LEADER_2_GESTURE;
-		}
-	// TAKEOFF CONDITION (altitude, y position) -- Only given by leader 1
-	else if(id == leaders_id[0] && leader1_marker_info[2] >= shoulder_height -0.1 && leader1_marker_info[2] <= shoulder_height + 0.1 &&
+	// TAKEOFF FOLLOWME
+	else if (gesture_marker_info[2] > leader_info[2]+0.1)
+		gesture_out = FOLLOWME_GESTURE;
+	// HOVERING CONDITION (altitude, x position, y position)
+	else if(gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1 &&
+		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.2 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.2 			&& GestureMarkerFrame[1] >= LeaderFrame[1]-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]+0.1)
+		gesture_out = HOVERING_GESTURE;
+	// TAKEOFF CONDITION (altitude, y position)
+	else if(gesture_marker_info[2] >= shoulder_height -0.1 && gesture_marker_info[2] <= shoulder_height + 0.1 &&
 		GestureMarkerFrame[0] >= LeaderFrame[0]-0.15 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.15 && 
 		GestureMarkerFrame[1] >= LeaderFrame[1]+arm_longitud-0.2 && GestureMarkerFrame[1] <= LeaderFrame[1]+arm_longitud+0.2)
 		gesture_out = TAKEOFF_GESTURE;
-	//HOVERING CONDITION (altitude, x position, y position) -- Controlled by both leaders
-	else if(current_leader_marker_altitude >= shoulder_height -0.1 && current_leader_marker_altitude <= shoulder_height + 0.1 &&
-		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.2 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.2 && GestureMarkerFrame[1] >= LeaderFrame[1]-0.1 && GestureMarkerFrame[1] 			<= LeaderFrame[1]+0.1)
-		gesture_out = HOVERING_GESTURE;
 	else
 		gesture_out = NON_GESTURE;
 
@@ -177,14 +140,8 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 				current_state = LANDED;  
 			break;
 		case HOVERING:  
-			if (find_gesture(0,20,FOLLOW_LEADER_1_GESTURE)>=90){
+			if (find_gesture(0,20,FOLLOWME_GESTURE)>=90)
 				current_state = FOLLOWING_LEADER;
-				leader_id = leaders_id[0];  // Change the global id of the leader to leader_1
-				}
-			else if (find_gesture(0,20,FOLLOW_LEADER_2_GESTURE)>=90){
-				current_state = FOLLOWING_LEADER;
-				leader_id = leaders_id[1]; 	// Change the global id of the leader to leader_2
-				}
 			else if (find_gesture(0,20,LAND_GESTURE)>=90){
 				current_state = LANDED;
 				land.publish(EmptyMsg);
@@ -205,8 +162,6 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 	  }
 }
 
-
-
 int main(int argc, char** argv){
     
 ros::init(argc, argv, "optitrack_gestures_demo");
@@ -220,8 +175,7 @@ std::map<gesturestype,std::string> gestures;
 	gestures[HOVERING_GESTURE] = "hovering";
 	gestures[TAKEOFF_GESTURE]="takeoff";
     	gestures[LAND_GESTURE]="land";
-    	gestures[FOLLOW_LEADER_1_GESTURE]="follow_leader_1";
-	gestures[FOLLOW_LEADER_2_GESTURE]="follow_leader_2";
+    	gestures[FOLLOWME_GESTURE]="follow_me";
 
 std::map<drone_state,std::string> status;
 	// Map definition 
@@ -234,17 +188,13 @@ std::map<drone_state,std::string> status;
 drone_control_msgs::demo_info data_out;
 gesturestype gesture_detected = NON_GESTURE;
 drone_state current_state = LANDED;
-
 //Physical user data
 double height;
 nh_.getParam("/gestures_node/leader_height",height);
-nh_.getParam("/gestures_node/leaders_id",leaders_id);
-nh_.getParam("/drone_target_points/leader_id",leader_id);
 
 // Publishers and subscribers
 ros::Subscriber optitrack_leader_sub_=nh_.subscribe("leader_pose_topic", 1, hasReceivedLeaderState);
-ros::Subscriber optitrack_marker_leader_1_sub_=nh_.subscribe("marker_leader_1_pose_topic", 1, hasReceivedMarkerLeader1State);
-ros::Subscriber optitrack_marker_leader_2_sub_=nh_.subscribe("marker_leader_2_pose_topic", 1, hasReceivedMarkerLeader2State);
+ros::Subscriber optitrack_gesture_marker_sub_=nh_.subscribe("gesture_marker_pose_topic", 1, hasReceivedModelState);
 ros::Publisher demo_info_pub_=nh_.advertise<drone_control_msgs::demo_info>("demo_info_topic",1);
 ros::Publisher takeoff_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/takeoff",1);
 ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
@@ -253,11 +203,10 @@ ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
 	// Main loop
 	while (ros::ok()){
 	// add the gesture detected to the gestures queue
-	gesture_detected = gesture_detector(height, leader_id);
+	gesture_detected = gesture_detector(height);
 	gestures_buffer(gesture_detected);
 	drone_status(current_state, takeoff_pub_, land_pub_);
-	nh_.setParam("/drone_target_points/leader_id",leader_id);   // Change the global leader id
-	
+
 	// Publishing node topic
 	data_out.gesture_detected = gestures[gesture_detected];
 	data_out.demo_status = status[current_state];
