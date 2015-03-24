@@ -62,7 +62,7 @@ ros::Subscriber optitrack_sub_=nh_.subscribe("rigied_bodies_topic", 1, hasReceiv
 ros::Publisher leader_info_pub_=nh_.advertise<drone_control_msgs::send_control_data>("leader_info_topic", 1);
 
 	while (ros::ok()){
-	nh_.getParam("/drone_target_points/leader_id",leader_id);
+	nh_.getParam("/leader_selector/leader_id",leader_id);
 	leader_info_pub_.publish(leader_publish_data);	
    	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.
     	rate.sleep();
