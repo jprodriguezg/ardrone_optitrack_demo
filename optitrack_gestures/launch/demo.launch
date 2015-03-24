@@ -12,17 +12,19 @@
 	</node>
 
 	
-	<node name="gestures_node" pkg="optitrack_gestures" type="optitrack_gestures_demo" output="screen">
-		<remap from="gesture_marker_pose_topic"  to="/optitrack/gesture_marker"/>
-		<remap from="leader_pose_topic"  to="/leader_info_topic"/>
-		<remap from="demo_info_topic"  to="/demo"/>
-		<param name="leader_height" value="1.8"/>		
-	</node>
-
 	<node name="leader_selector" pkg="drone_following_leader" type="leader_selector_node" output="screen">
 		<remap from="rigied_bodies_topic"  to="/optitrack/rigid_bodies"/>
 		<remap from="leader_info_topic"  to="/leader_info_topic"/>
 		<param name="leader_id" value="2"/>
+	</node>
+
+	<node name="gestures_node" pkg="optitrack_gestures" type="optitrack_gestures_demo" output="screen">
+		<remap from="marker_leader_1_pose_topic"  to="/optitrack/gesture_marker_1"/>
+		<remap from="marker_leader_2_pose_topic"  to="/optitrack/gesture_marker_2"/>
+		<remap from="leader_pose_topic"  to="/leader_info_topic"/>
+		<remap from="demo_info_topic"  to="/demo"/>
+		<param name="leader_height" value="1.8"/>
+		<rosparam>leaders_id:  [2, 3]</rosparam>		
 	</node>
 
 	<node name="drone_target_points" pkg="drone_following_leader" type="leader_desired_position_node" output="screen">
