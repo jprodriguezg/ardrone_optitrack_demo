@@ -97,21 +97,24 @@ void WorldToLeaderframe(double angle){
 	}
 }
 
-gesturestype gesture_detector(double height, int id){
+gesturestype gesture_detector(std::vector<double> heights, int id){
 	
-	double shoulder_height, arm_longitud;
-	//shoulder_height = height*(7/8);
-	//arm_longitud = height*(4/9);
-	shoulder_height = 1.55;
-	arm_longitud = 0.6;
+	double shoulder_height = 1.55, arm_longitud = 0.6;  // For a person with 1.80 m of height
 	gesturestype gesture_out;
 	double current_leader_marker_altitude = 0;
 
-	if (id == leaders_id[0])
+	if (id == leaders_id[0]){
 		current_leader_marker_altitude = leader1_marker_info[2];
-	else if (id == leaders_id[1])
+		shoulder_height = heights[0]*(double(7)/8);
+		arm_longitud = heights[0]*(double(3)/8);
+		}
+	else if (id == leaders_id[1]){
 		current_leader_marker_altitude = leader2_marker_info[2];
-
+		shoulder_height = heights[1]*(double(7)/8);
+		arm_longitud = heights[1]*(double(3)/8);
+		}
+	
+	//std::cout << "Shoulder "<<shoulder_height<<" arm  "<<arm_longitud<<std::endl;
 	// Transform the leader and marker frames base on the angle of the leader
 	WorldToLeaderframe(leader_info[3]);
 
@@ -238,8 +241,8 @@ gesturestype gesture_detected = NON_GESTURE;
 drone_state current_state = LANDED;
 
 //Physical user data
-double height;
-nh_.getParam("/gestures_node/leader_height",height);
+std::vector<double> heights;
+nh_.getParam("/gestures_node/leaders_heights",heights);
 nh_.getParam("/gestures_node/leaders_id",leaders_id);
 nh_.getParam("/leader_selector/leader_id",leader_id);
 
@@ -255,7 +258,7 @@ ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
 	// Main loop
 	while (ros::ok()){
 	// add the gesture detected to the gestures queue
-	gesture_detected = gesture_detector(height, leader_id);
+	gesture_detected = gesture_detector(heights, leader_id);
 	gestures_buffer(gesture_detected);
 	drone_status(current_state, takeoff_pub_, land_pub_, nh_);
 	

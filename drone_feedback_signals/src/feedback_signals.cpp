@@ -32,7 +32,7 @@ ros::Rate rate(20.0);
 ros::Subscriber optitrack_demo_node_sub_=nh_.subscribe("demo_node_topic", 1, hasReceivedDemoinfo);
 ros::Subscriber alt_sub = nh_.subscribe("/ardrone/navdata", 10, hasReceivedNavdataInfo);
 ros::ServiceClient drone_led =  nh_.serviceClient<ardrone_autonomy::LedAnim>("/ardrone/setledanimation");
-ros::Publisher sound_pub_=nh_.advertise<sound_play::SoundRequest>("output_sound", 1);
+ros::Publisher sound_pub_=nh_.advertise<sound_play::SoundRequest>("output_sound", 10);
 
 
 int BatteryFlag = 0, fs=20;
@@ -65,7 +65,7 @@ nh_.getParam("/drone_feedback_signals_node/following_sound",following_sound);
 	else if(drone_status != ant_status){
 
 		// Led status feedback
-		srv.request.duration = 3;
+		srv.request.duration = 1.5;
 		srv.request.type = 4; // SNAKE_GREEN_RED
 		drone_led.call(srv);
 
