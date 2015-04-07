@@ -15,7 +15,7 @@
 
 // Some global variables
 drone_control_msgs::send_control_data leader_publish_data;
-std::vector<double> Leader_info (4,0), virtual_fence (5), ant_pose(4,0), initial_pose(4,0); 
+std::vector<double> Leader_info (4,0), virtual_fence (5), ant_pose(4,0), initial_pose(4,0), dPose (4,0); 
 std::string drone_status;
 
 // Define callbacks 
@@ -38,26 +38,26 @@ void hasReceivedDemoinfo(const drone_control_msgs::demo_info::ConstPtr& msg){
 void follow_leader(){
 	// Conditions to avoid that drone goes out of fence
 	// x position control 
-	if (Leader_info[0]>virtual_fence[0]-0.1)
-		leader_publish_data.position.x = virtual_fence[0]-0.1;
-	else if (Leader_info[0]<virtual_fence[1]+0.1)
-		leader_publish_data.position.x = virtual_fence[1]+0.1;
+	if (Leader_info[0]>virtual_fence[0]-dPose[0]-0.2) // -0.1
+		leader_publish_data.position.x = virtual_fence[0]-dPose[0]-0.2; // -0.1
+	else if (Leader_info[0]<virtual_fence[1]+dPose[0]+0.2) // +0.1
+		leader_publish_data.position.x = virtual_fence[1]+dPose[0]+0.2; // +0.1
 	else	
 		leader_publish_data.position.x = Leader_info[0];
 
 	// y position control
-	if (Leader_info[1]>virtual_fence[2]-0.1)
-		leader_publish_data.position.y = virtual_fence[2]-0.1;
-	else if (Leader_info[1]<virtual_fence[3]+0.1)
-		leader_publish_data.position.y = virtual_fence[3]+0.1;
+	if (Leader_info[1]>virtual_fence[2]-dPose[1]-0.2) // -0.1
+		leader_publish_data.position.y = virtual_fence[2]-dPose[1]-0.2; // -0.1
+	else if (Leader_info[1]<virtual_fence[3]+dPose[1]+0.2) // +0.1
+		leader_publish_data.position.y = virtual_fence[3]+dPose[1]+0.2; // +0.1
 	else	
 		leader_publish_data.position.y = Leader_info[1];
 	
 	// z control
 	if (Leader_info[2]<0.3)
 		leader_publish_data.position.z = 0.3;
-	else if (Leader_info[2]>virtual_fence[4]-0.1)
-		leader_publish_data.position.z = virtual_fence[4]-0.1;
+	else if (Leader_info[2]>virtual_fence[4]-dPose[2]-0.1) // -0.1
+		leader_publish_data.position.z = virtual_fence[4]-0.05; //-0.1
 	else	
 		leader_publish_data.position.z = Leader_info[2];
 
@@ -82,6 +82,7 @@ ant_pose = initial_pose;
 	while (ros::ok()){
 
 	nh_.getParam("/drone_control_node/virtual_fence",virtual_fence);
+	nh_.getParam("/drone_control_node/delta_pose", dPose);
 	
 	if (Leader_info[0] && drone_status =="following_leader"){
 		follow_leader();

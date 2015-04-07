@@ -24,14 +24,14 @@
 		<remap from="leader_pose_topic"  to="/leader_info_topic"/>
 		<remap from="demo_info_topic"  to="/demo"/>
 		<rosparam>leaders_heights:  [1.78, 1.80]</rosparam>	
-		<rosparam>leaders_id:  [2, 3]</rosparam>		
+		<rosparam>leaders_id:  [4, 2]</rosparam>		
 	</node>
 
 	<node name="drone_target_points" pkg="drone_following_leader" type="leader_desired_position_node" output="screen">
 		<remap from="leader_info_topic"  to="/leader_info_topic"/>
 		<remap from="desired_leader_position_topic"  to="/drone_target_points"/>
 		<remap from="demo_node_topic"  to="/demo"/>
-		<rosparam>initial_pose:  [0.0, 0.0, 1.0, 0.0]</rosparam>
+		<rosparam>initial_pose:  [1.0, 0.0, 1.0, 0.0]</rosparam>
 		<!--rosparam>initial_pose:  [-1.4, -0.5, 1.0, 0.0]</rosparam-->  <!-- [x,y,z,yaw (degrees)] -->
 	</node>
 
@@ -42,7 +42,7 @@
 		<rosparam>Kp:  [0.25, 0.25,  0.5, 0.0125]</rosparam>  <!-- [pitch, roll, altitude, yaw] -->
 		<rosparam>velocity_limit:  [0.2, 0.2, 1.0, 1.0]</rosparam>  <!-- [pitch, roll, altitude, yaw] -->
 		<rosparam>delta_pose:  [-1.5, 0.0, 0.0, 0.0]</rosparam>  <!-- [x,y,z,yaw (degrees)] -->
-		<rosparam>virtual_fence:  [3.0, -1.8, 1.8, -2.4, 2.25]</rosparam>  
+		<rosparam>virtual_fence:  [3.0, -1.8, 2.45, -2.45, 2.25]</rosparam>  
 		<!--rosparam>virtual_fence:  [1.2, -4.2, 1.9, -3.0, 2.25]</rosparam -->  
 		<!--rosparam>virtual_fence:  [3.0, -2.45, 1.85, -2.4, 2.25]</rosparam-->  
 		<!-- [maxX, minX, maxY, minY, maxAltitude] -->
