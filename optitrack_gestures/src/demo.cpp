@@ -22,7 +22,7 @@ enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLL
 enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER,MISSION};
 
 // Some global variables
-std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), GestureMarkerFrame(2,0), dPose (4,0); 
+std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), GestureMarkerFrame(2,0), dPose (4,0), NewdPose(4,0); 
 std::vector<float> drone_quaternion (4,0), quaternion1 (4,0), quaternion2 (4,0);
 std::vector<float> leaders_id(2,0);  // Posible leaders ids
 std::deque<gesturestype> gestures_queue (40,NON_GESTURE);
@@ -223,8 +223,10 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 		case FOLLOWING_LEADER: 
 			if (find_gesture(0,20,HOVERING_GESTURE)>=90)
 				current_state = HOVERING;
-			else if (find_gesture(0,20,MISSION_GESTURE)>=90)
+			else if (find_gesture(0,20,MISSION_GESTURE)>=90){
 				current_state = MISSION;
+				nh_.setParam("/drone_control_node/delta_pose", NewdPose);
+				}
 			else if (find_gesture(0,20,LAND_GESTURE)>=90){
 				current_state = LANDED;
 				land.publish(EmptyMsg);
