@@ -41,10 +41,11 @@ ardrone_autonomy::LedAnim srv;
 srv.request.freq = fs/5;
 sound_play::SoundRequest sound_out;
 
-std::string learder_sound, hovering_sound, following_sound;
+std::string learder_sound, hovering_sound, following_sound,mission_sound;
 nh_.getParam("/drone_feedback_signals_node/landed_sound",learder_sound);
 nh_.getParam("/drone_feedback_signals_node/hovering_sound",hovering_sound);
 nh_.getParam("/drone_feedback_signals_node/following_sound",following_sound);
+nh_.getParam("/drone_feedback_signals_node/mission_sound",mission_sound);
 
 	while (ros::ok()){
 
@@ -79,7 +80,8 @@ nh_.getParam("/drone_feedback_signals_node/following_sound",following_sound);
 				sound_out.arg = hovering_sound;
 			else if(drone_status == "following_leader")
 				sound_out.arg = following_sound;
-
+			else if(drone_status == "mission_mode")
+				sound_out.arg = mission_sound;
 		
 		sound_pub_.publish(sound_out);
 

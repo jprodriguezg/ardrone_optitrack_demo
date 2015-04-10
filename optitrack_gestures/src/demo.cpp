@@ -15,6 +15,7 @@
 #include <drone_control_msgs/demo_info.h>
 #include <drone_control_msgs/drone_control_info.h>
 #include <visual_object_detector/DetectObject.h>
+#include <ardrone_autonomy/CamSelect.h>
 # define PI           3.14159265358979323846
 
 // Defining de gesturetype and drone_state varibles
@@ -187,7 +188,7 @@ double find_gesture(int begin, int end, gesturestype search_gesture){
 	return out;
 }
 
-void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publisher &land, ros::NodeHandle &nh_){
+void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publisher &land, ros::NodeHandle &nh_, ros::ServiceClient &detector_client, visual_object_detector::DetectObject &detector_srv, ros::ServiceClient &drone_cam_client, ardrone_autonomy::CamSelect &drone_cam_srv){
 
 	std_msgs::Empty EmptyMsg;
 	switch (current_state) {
@@ -202,6 +203,7 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 				nh_.setParam("/leader_selector/leader_id",leader_id);   // Change the global leader id
 				}
 			break;
+
 		case HOVERING:  
 			if (find_gesture(0,20,FOLLOW_LEADER_1_GESTURE)>=90){
 				current_state = FOLLOWING_LEADER;
@@ -220,23 +222,37 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 			else
 				current_state = HOVERING;
 			break;
+
 		case FOLLOWING_LEADER: 
 			if (find_gesture(0,20,HOVERING_GESTURE)>=90)
 				current_state = HOVERING;
-			else if (find_gesture(0,20,MISSION_GESTURE)>=90){
-				current_state = MISSION;
-				nh_.setParam("/drone_control_node/delta_pose", NewdPose);
-				}
 			else if (find_gesture(0,20,LAND_GESTURE)>=90){
 				current_state = LANDED;
 				land.publish(EmptyMsg);
 				}
+			else if (find_gesture(0,20,MISSION_GESTURE)>=90){
+				current_state = MISSION;
+				nh_.setParam("/drone_control_node/delta_pose", NewdPose);
+				drone_cam_client.call(drone_cam_srv);
+				}
 			else
 				current_state = FOLLOWING_LEADER;
 			break;
+
 		case MISSION: 
-			if (drone_info[0] >= leader_info[0]-0.05 && drone_info[0] <= leader_info[0]+0.05 && drone_info[1] >= leader_info[1]-0.05 && drone_info[1] <= leader_info[1]+0.05)
-				current_state = HOVERING;
+			if (drone_info[0] >= leader_info[0]-0.05 && drone_info[0] <= leader_info[0]+0.05 && drone_info[1] >= leader_info[1]-0.05 && drone_info[1] <= leader_info[1]+0.05){
+
+				if (detector_client.call(detector_srv))
+					detector_flag = detector_srv.response.output; 
+				else
+					std::cout <<"Failed to call service detect_object"<<std::endl;
+
+				if (detector_flag == 0){
+					nh_.setParam("/drone_control_node/delta_pose", dPose);
+					drone_cam_client.call(drone_cam_srv);
+					current_state = FOLLOWING_LEADER;
+					}	
+				}
 			else if (find_gesture(0,20,LAND_GESTURE)>=90){
 				current_state = LANDED;
 				land.publish(EmptyMsg);
@@ -246,7 +262,6 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 			break;
 	  }
 }
-
 
 
 int main(int argc, char** argv){
@@ -264,18 +279,21 @@ std::map<gesturestype,std::string> gestures;
     	gestures[LAND_GESTURE]="land";
     	gestures[FOLLOW_LEADER_1_GESTURE]="follow_leader_1";
 	gestures[FOLLOW_LEADER_2_GESTURE]="follow_leader_2";
+	gestures[MISSION_GESTURE]="mission_gesture";
 
 std::map<drone_state,std::string> status;
 	// Map definition 
 	status[LANDED]="landed";
 	status[HOVERING] = "hovering";
 	status[FOLLOWING_LEADER]="following_leader";
+	status[MISSION] = "mission_mode";
 
 // Variables declaration 
 drone_control_msgs::demo_info data_out;
 gesturestype gesture_detected = NON_GESTURE;
 drone_state current_state = LANDED;
-visual_object_detector::DetectObject srv;
+visual_object_detector::DetectObject detector_srv;
+ardrone_autonomy::CamSelect drone_cam_srv;
 
 //Physical user data
 std::vector<double> heights;
@@ -294,21 +312,16 @@ ros::Publisher takeoff_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/takeoff",1)
 ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
 
 // Services
-ros::ServiceClient client = nh_.serviceClient<visual_object_detector::DetectObject>("detect_object");
+ros::ServiceClient detector_client = nh_.serviceClient<visual_object_detector::DetectObject>("/detect_object");
+ros::ServiceClient drone_cam_client =  nh_.serviceClient<ardrone_autonomy::CamSelect>("/ardrone/togglecam");
 
 	
 	// Main loop
 	while (ros::ok()){
-
-		if (client.call(srv))
-			detector_flag = srv.response.output; //ROS_INFO("Sum: %ld", (long int)srv.response.sum);
-		else
-			ROS_ERROR("Failed to call service detect_object");
-
 	// add the gesture detected to the gestures queue
 	gesture_detected = gesture_detector(heights, leader_id);
 	gestures_buffer(gesture_detected);
-	drone_status(current_state, takeoff_pub_, land_pub_, nh_);
+	drone_status(current_state, takeoff_pub_, land_pub_, nh_, detector_client, detector_srv, drone_cam_client, drone_cam_srv);
 	
 	// Publishing node topic
 	data_out.gesture_detected = gestures[gesture_detected];

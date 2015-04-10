@@ -9,6 +9,7 @@
 		<param name="landed_sound" value="$(find drone_feedback_signals)/sounds/landed.wav"/>
 		<param name="hovering_sound" value="$(find drone_feedback_signals)/sounds/hovering.wav"/>
 		<param name="following_sound" value="$(find drone_feedback_signals)/sounds/following.wav"/>
+		<param name="mission_sound" value="$(find drone_feedback_signals)/sounds/mission.wav"/>
 	</node>
 
 	
