@@ -86,7 +86,7 @@ find_package(OpenCV REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES visual_object_detector
-  CATKIN_DEPENDS cv_bridge rospy std_msgs sensor_msgs message_generation
+  CATKIN_DEPENDS cv_bridge rospy std_msgs sensor_msgs message_runtime
 #  DEPENDS system_lib
 )
 

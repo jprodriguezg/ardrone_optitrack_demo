@@ -14,18 +14,19 @@
 #include <drone_control_msgs/send_control_data.h>
 #include <drone_control_msgs/demo_info.h>
 #include <drone_control_msgs/drone_control_info.h>
+#include <visual_object_detector/DetectObject.h>
 # define PI           3.14159265358979323846
 
 // Defining de gesturetype and drone_state varibles
-enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLLOW_LEADER_1_GESTURE,FOLLOW_LEADER_2_GESTURE};
-enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER};
+enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLLOW_LEADER_1_GESTURE,FOLLOW_LEADER_2_GESTURE,MISSION_GESTURE};
+enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER,MISSION};
 
 // Some global variables
-std::vector<double> leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), GestureMarkerFrame(2,0); 
-std::vector<float> quaternion1 (4,0), quaternion2 (4,0);
+std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), GestureMarkerFrame(2,0), dPose (4,0); 
+std::vector<float> drone_quaternion (4,0), quaternion1 (4,0), quaternion2 (4,0);
 std::vector<float> leaders_id(2,0);  // Posible leaders ids
 std::deque<gesturestype> gestures_queue (40,NON_GESTURE);
-int leader_id = 0;   // Global variable of leader
+int leader_id = 0, detector_flag = 0;   // Global variable of leader
 
 double quaternion2angles(std::vector<float> &quaternion){
 	double roll, pitch, yaw, Dyaw;
@@ -80,6 +81,22 @@ void hasReceivedMarkerLeader2State(const geometry_msgs::PoseStamped::ConstPtr& m
   return;
 } 
 
+
+void hasReceivedMDroneState(const geometry_msgs::PoseStamped::ConstPtr& msg){
+	
+	// Obtaining gesture marker info 
+  	drone_info[0] = msg->pose.position.x; 
+	drone_info[1] = msg->pose.position.y;
+	drone_info[2] = msg->pose.position.z;
+	drone_quaternion[0] = msg->pose.orientation.x;
+	drone_quaternion[1] = msg->pose.orientation.y;
+	drone_quaternion[2] = msg->pose.orientation.z;
+	drone_quaternion[3] = msg->pose.orientation.w;
+	drone_info[3] = quaternion2angles(quaternion2);
+
+  return;
+} 
+
 // Functions
 void WorldToLeaderframe(double angle){
 
@@ -99,7 +116,7 @@ void WorldToLeaderframe(double angle){
 
 gesturestype gesture_detector(std::vector<double> heights, int id){
 	
-	double shoulder_height = 1.55, arm_longitud = 0.6;  // For a person with 1.80 m of height
+	double shoulder_height = 1.55, arm_longitud = 0.6, shoulder_longitude = 0.25;  // For a person with 1.80 m of height
 	gesturestype gesture_out;
 	double current_leader_marker_altitude = 0;
 
@@ -107,11 +124,13 @@ gesturestype gesture_detector(std::vector<double> heights, int id){
 		current_leader_marker_altitude = leader1_marker_info[2];
 		shoulder_height = heights[0]*(double(7)/8);
 		arm_longitud = heights[0]*(double(3)/8);
+		shoulder_longitude = heights[0]*(double(2)/15);
 		}
 	else if (id == leaders_id[1]){
 		current_leader_marker_altitude = leader2_marker_info[2];
 		shoulder_height = heights[1]*(double(7)/8);
 		arm_longitud = heights[1]*(double(3)/8);
+		shoulder_longitude = heights[1]*(double(2)/15);
 		}
 	
 	//std::cout << "Shoulder "<<shoulder_height<<" arm  "<<arm_longitud<<std::endl;
@@ -127,13 +146,17 @@ gesturestype gesture_detector(std::vector<double> heights, int id){
 	else if (leader2_marker_info[2] > leader_info[2]+0.1)
 		gesture_out = FOLLOW_LEADER_2_GESTURE;
 	// TAKEOFF CONDITION (altitude, y position) -- Only given by leader 1
-	else if(/**id == leaders_id[0] &&*/ leader1_marker_info[2] >= shoulder_height -0.1 && leader1_marker_info[2] <= shoulder_height+0.1 		&& GestureMarkerFrame[0] >= LeaderFrame[0]-0.15 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.15 && 
+	else if(/**id == leaders_id[0] &&*/ leader1_marker_info[2] >= shoulder_height -0.1 && leader1_marker_info[2] <= shoulder_height+0.1 && GestureMarkerFrame[0] >= LeaderFrame[0]-0.15 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.15 && 
 		GestureMarkerFrame[1] >= LeaderFrame[1]+arm_longitud-0.2 && GestureMarkerFrame[1] <= LeaderFrame[1]+arm_longitud+0.2)
 		gesture_out = TAKEOFF_GESTURE;
 	//HOVERING CONDITION (altitude, x position, y position) -- Controlled by both leaders
 	else if(current_leader_marker_altitude >= shoulder_height -0.1 && current_leader_marker_altitude <= shoulder_height + 0.1 &&
-		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.2 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.2 			&& GestureMarkerFrame[1] >= LeaderFrame[1]-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]+0.1)
+		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.2 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.2 && GestureMarkerFrame[1] >= LeaderFrame[1]-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]+0.1)
 		gesture_out = HOVERING_GESTURE;
+	// MISSION CONDITION (altitude, x position, y position) -- Controlled by both leaders
+	else if(current_leader_marker_altitude >= shoulder_height -0.1 && current_leader_marker_altitude <= shoulder_height + 0.1 &&
+		GestureMarkerFrame[0] >= LeaderFrame[0]-0.1 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.1 && GestureMarkerFrame[1] >= LeaderFrame[1]+shoulder_longitude-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]+shoulder_longitude+0.1)
+		gesture_out = MISSION_GESTURE;
 	else
 		gesture_out = NON_GESTURE;
 
@@ -200,12 +223,24 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 		case FOLLOWING_LEADER: 
 			if (find_gesture(0,20,HOVERING_GESTURE)>=90)
 				current_state = HOVERING;
+			else if (find_gesture(0,20,MISSION_GESTURE)>=90)
+				current_state = MISSION;
 			else if (find_gesture(0,20,LAND_GESTURE)>=90){
 				current_state = LANDED;
 				land.publish(EmptyMsg);
 				}
 			else
 				current_state = FOLLOWING_LEADER;
+			break;
+		case MISSION: 
+			if (drone_info[0] >= leader_info[0]-0.05 && drone_info[0] <= leader_info[0]+0.05 && drone_info[1] >= leader_info[1]-0.05 && drone_info[1] <= leader_info[1]+0.05)
+				current_state = HOVERING;
+			else if (find_gesture(0,20,LAND_GESTURE)>=90){
+				current_state = LANDED;
+				land.publish(EmptyMsg);
+				}
+			else
+				current_state = MISSION;
 			break;
 	  }
 }
@@ -234,29 +269,40 @@ std::map<drone_state,std::string> status;
 	status[HOVERING] = "hovering";
 	status[FOLLOWING_LEADER]="following_leader";
 
-// Variablas declaration 
-
+// Variables declaration 
 drone_control_msgs::demo_info data_out;
 gesturestype gesture_detected = NON_GESTURE;
 drone_state current_state = LANDED;
+visual_object_detector::DetectObject srv;
 
 //Physical user data
 std::vector<double> heights;
 nh_.getParam("/gestures_node/leaders_heights",heights);
 nh_.getParam("/gestures_node/leaders_id",leaders_id);
 nh_.getParam("/leader_selector/leader_id",leader_id);
+nh_.getParam("/drone_control_node/delta_pose", dPose);
 
 // Publishers and subscribers
 ros::Subscriber optitrack_leader_sub_=nh_.subscribe("leader_pose_topic", 1, hasReceivedLeaderState);
 ros::Subscriber optitrack_marker_leader_1_sub_=nh_.subscribe("marker_leader_1_pose_topic", 1, hasReceivedMarkerLeader1State);
 ros::Subscriber optitrack_marker_leader_2_sub_=nh_.subscribe("marker_leader_2_pose_topic", 1, hasReceivedMarkerLeader2State);
+ros::Subscriber optitrack_drone_sub_=nh_.subscribe("drone_pose_topic", 1, hasReceivedMDroneState);
 ros::Publisher demo_info_pub_=nh_.advertise<drone_control_msgs::demo_info>("demo_info_topic",1);
 ros::Publisher takeoff_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/takeoff",1);
 ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
 
+// Services
+ros::ServiceClient client = nh_.serviceClient<visual_object_detector::DetectObject>("detect_object");
+
 	
 	// Main loop
 	while (ros::ok()){
+
+		if (client.call(srv))
+			detector_flag = srv.response.output; //ROS_INFO("Sum: %ld", (long int)srv.response.sum);
+		else
+			ROS_ERROR("Failed to call service detect_object");
+
 	// add the gesture detected to the gestures queue
 	gesture_detected = gesture_detector(heights, leader_id);
 	gestures_buffer(gesture_detected);
