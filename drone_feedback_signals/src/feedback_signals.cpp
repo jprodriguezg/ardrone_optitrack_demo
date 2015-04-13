@@ -41,7 +41,8 @@ ardrone_autonomy::LedAnim srv;
 srv.request.freq = fs/5;
 sound_play::SoundRequest sound_out;
 
-std::string learder_sound, hovering_sound, following_sound,mission_sound;
+std::string learder_sound, hovering_sound, following_sound,mission_sound,emergency_sound;
+nh_.getParam("/drone_feedback_signals_node/emergency_sound",learder_sound);
 nh_.getParam("/drone_feedback_signals_node/landed_sound",learder_sound);
 nh_.getParam("/drone_feedback_signals_node/hovering_sound",hovering_sound);
 nh_.getParam("/drone_feedback_signals_node/following_sound",following_sound);
@@ -74,7 +75,9 @@ nh_.getParam("/drone_feedback_signals_node/mission_sound",mission_sound);
 		sound_out.command = 1;
 
 		// Sound status feedback
-			if (drone_status == "landed")
+			if (drone_status == "Emergency")
+				sound_out.arg = emergency_sound;
+			else if (drone_status == "landed")
 				sound_out.arg = learder_sound;
 			else if(drone_status == "hovering")
 				sound_out.arg = hovering_sound;

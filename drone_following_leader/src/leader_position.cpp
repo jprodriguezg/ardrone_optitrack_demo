@@ -15,7 +15,7 @@
 
 // Some global variables
 drone_control_msgs::send_control_data leader_publish_data;
-std::vector<double> Leader_info (4,0), virtual_fence (5), ant_pose(4,0), initial_pose(4,0), dPose (4,0); 
+std::vector<double> Leader_info (4,0), virtual_fence (5), ant_pose(4,0), initial_pose(4,0), mission_pose (4,0), dPose (4,0); 
 std::string drone_status;
 
 // Define callbacks 
@@ -77,6 +77,7 @@ ros::Subscriber optitrack_demo_node_sub_=nh_.subscribe("demo_node_topic", 1, has
 ros::Publisher leader_info_pub_=nh_.advertise<drone_control_msgs::send_control_data>("desired_leader_position_topic", 1);
 
 nh_.getParam("/drone_target_points/initial_pose",initial_pose);
+nh_.getParam("/gestures_node/mission_target",mission_pose);
 ant_pose = initial_pose;
 
 	while (ros::ok()){
@@ -88,9 +89,16 @@ ant_pose = initial_pose;
 		follow_leader();
 		ant_pose =Leader_info;
 		}
+	else if (drone_status =="mission_mode"){
+		leader_publish_data.position.x = mission_pose[0];
+		leader_publish_data.position.y = mission_pose[1];
+		leader_publish_data.position.z = mission_pose[2];
+		leader_publish_data.yaw = mission_pose[3];
+		ant_pose = mission_pose;
+		}
 	else {
-		leader_publish_data.position.x=ant_pose[0];
-		leader_publish_data.position.y=ant_pose[1];
+		leader_publish_data.position.x = ant_pose[0];
+		leader_publish_data.position.y = ant_pose[1];
 		leader_publish_data.position.z = 1.0;
 		leader_publish_data.yaw=ant_pose[3];
 		}

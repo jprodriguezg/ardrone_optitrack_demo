@@ -232,6 +232,7 @@ srv.request.duration = 0;
 			}
 		
 			publish_data.mode = "Emergency";
+			nh_.setParam("/drone_control_node/status","Emergency");
 			ros::Duration(0.5).sleep();
 			break;
 			}
