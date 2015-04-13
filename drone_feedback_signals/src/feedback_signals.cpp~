@@ -42,7 +42,7 @@ srv.request.freq = fs/5;
 sound_play::SoundRequest sound_out;
 
 std::string learder_sound, hovering_sound, following_sound,mission_sound,emergency_sound;
-nh_.getParam("/drone_feedback_signals_node/emergency_sound",learder_sound);
+nh_.getParam("/drone_feedback_signals_node/emergency_sound",emergency_sound);
 nh_.getParam("/drone_feedback_signals_node/landed_sound",learder_sound);
 nh_.getParam("/drone_feedback_signals_node/hovering_sound",hovering_sound);
 nh_.getParam("/drone_feedback_signals_node/following_sound",following_sound);

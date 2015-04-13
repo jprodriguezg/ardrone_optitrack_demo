@@ -23,6 +23,7 @@
 	<node name="gestures_node" pkg="optitrack_gestures" type="optitrack_gestures_demo" output="screen">
 		<remap from="marker_leader_1_pose_topic"  to="/optitrack/gesture_marker_1"/>
 		<remap from="marker_leader_2_pose_topic"  to="/optitrack/gesture_marker_2"/>
+		<remap from="drone_control_topic"  to="/drone_control_info"/>
 		<remap from="leader_pose_topic"  to="/leader_info_topic"/>
 		<remap from="demo_info_topic"  to="/demo"/>
 		<rosparam>leaders_heights: [1.78, 1.80]</rosparam>	

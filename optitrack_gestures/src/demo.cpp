@@ -9,6 +9,7 @@
 #include <tf/transform_datatypes.h>
 #include <tf/LinearMath/Matrix3x3.h>
 #include <tf/LinearMath/Quaternion.h>
+#include <ardrone_autonomy/Navdata.h>
 #include <optitrack_msgs/RigidBodyData.h>
 #include <optitrack_msgs/RigidBodies.h>
 #include <drone_control_msgs/send_control_data.h>
@@ -24,10 +25,12 @@ enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER,MISSION,EMERGENCY};
 
 // Some global variables
 std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), DroneFrame(2,0), GestureMarkerFrame(2,0), dPose (4,0); 
-std::vector<float> drone_quaternion (4,0), quaternion1 (4,0), quaternion2 (4,0);
+std::vector<float> quaternion1 (4,0), quaternion2 (4,0);
 std::vector<float> leaders_id(2,0);  // Posible leaders ids
 std::deque<gesturestype> gestures_queue (40,NON_GESTURE);
 int leader_id = 0, detector_flag = 0;   // Global variable of leader
+double VxDrone, VyDrone;
+std::string drone_control_status;
 
 double quaternion2angles(std::vector<float> &quaternion){
 	double roll, pitch, yaw, Dyaw;
@@ -83,19 +86,20 @@ void hasReceivedMarkerLeader2State(const geometry_msgs::PoseStamped::ConstPtr& m
 } 
 
 
-void hasReceivedMDroneState(const geometry_msgs::PoseStamped::ConstPtr& msg){
+void hasReceivedDroneControlState(const drone_control_msgs::drone_control_info::ConstPtr& msg){
 	
-	// Obtaining gesture marker info 
-  	drone_info[0] = msg->pose.position.x; 
-	drone_info[1] = msg->pose.position.y;
-	drone_info[2] = msg->pose.position.z;
-	drone_quaternion[0] = msg->pose.orientation.x;
-	drone_quaternion[1] = msg->pose.orientation.y;
-	drone_quaternion[2] = msg->pose.orientation.z;
-	drone_quaternion[3] = msg->pose.orientation.w;
-	drone_info[3] = quaternion2angles(quaternion2);
-
+	drone_control_status = msg->mode;
+	drone_info[0] = msg->position.x; 
+	drone_info[1] = msg->position.y;
+	drone_info[2] = msg->position.z;
+	drone_info[3] = msg->yaw;
   return;
+} 
+
+
+void hasReceivedNavdataInfo(const ardrone_autonomy::NavdataConstPtr msg){
+	VxDrone = msg->vx;
+	VyDrone = msg->vy;
 } 
 
 // Functions
@@ -158,7 +162,7 @@ gesturestype gesture_detector(std::vector<double> heights, int id){
 		gesture_out = HOVERING_GESTURE;
 	// MISSION CONDITION (altitude, x position, y position) -- Controlled by both leaders
 	else if(current_leader_marker_altitude >= shoulder_height -0.1 && current_leader_marker_altitude <= shoulder_height + 0.1 &&
-		GestureMarkerFrame[0] >= LeaderFrame[0]-0.1 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.1 && GestureMarkerFrame[1] >= LeaderFrame[1]+shoulder_longitude-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]+shoulder_longitude+0.1)
+		GestureMarkerFrame[0] >= LeaderFrame[0]-0.1 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.1 && GestureMarkerFrame[1] >= LeaderFrame[1]-shoulder_longitude-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]-shoulder_longitude+0.1)
 		gesture_out = MISSION_GESTURE;
 	else
 		gesture_out = NON_GESTURE;
@@ -190,7 +194,7 @@ double find_gesture(int begin, int end, gesturestype search_gesture){
 	return out;
 }
 
-void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publisher &land, ros::NodeHandle &nh_, ros::ServiceClient &detector_client, visual_object_detector::DetectObject &detector_srv, ros::ServiceClient &drone_cam_client, ardrone_autonomy::CamSelect &drone_cam_srv, std::string drone_control_status){
+void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publisher &land, ros::NodeHandle &nh_, ros::ServiceClient &detector_client, visual_object_detector::DetectObject &detector_srv, ros::ServiceClient &drone_cam_client, ardrone_autonomy::CamSelect &drone_cam_srv){
 
 	std_msgs::Empty EmptyMsg;
 	switch (current_state) {
@@ -249,7 +253,8 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 		case MISSION: 
 			if (drone_control_status == "Emergency")
 				current_state = EMERGENCY;
-			else if (DroneFrame[0] >= LeaderFrame[0]+dPose[0]-0.05 && DroneFrame[0] <= LeaderFrame[0]+dPose[0]+0.05 && DroneFrame[1] >= LeaderFrame[1]+dPose[1]-0.05 && DroneFrame[1] <= LeaderFrame[1]+dPose[1]+0.05){ // Start Mission condition
+			//else if (DroneFrame[0] >= LeaderFrame[0]+dPose[0]-0.05 && DroneFrame[0] <= LeaderFrame[0]+dPose[0]+0.05 && DroneFrame[1] >= LeaderFrame[1]+dPose[1]-0.05 && DroneFrame[1] <= LeaderFrame[1]+dPose[1]+0.05){ // Start Mission condition
+			else if (abs(VxDrone)<30 || abs(VyDrone)<30){
 
 				if (detector_client.call(detector_srv))
 					detector_flag = detector_srv.response.output; 
@@ -269,8 +274,19 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 				}
 			else
 				current_state = MISSION;
+
+			std::cout <<" X conditions " <<std::endl;
+			std::cout <<DroneFrame[0] << " >= " <<  LeaderFrame[0]+dPose[0]-0.05 <<std::endl;
+			std::cout <<DroneFrame[0] << " <= " <<  LeaderFrame[0]+dPose[0]+0.05 <<std::endl;
+			std::cout <<" Y conditions " <<std::endl;
+			std::cout <<DroneFrame[1] << " >= " <<  LeaderFrame[1]+dPose[1]-0.05 <<std::endl;
+			std::cout <<DroneFrame[1] << " <= " <<  LeaderFrame[1]+dPose[1]+0.05 <<std::endl;
+
 			break;
 		case EMERGENCY: 
+			if (find_gesture(0,20,LAND_GESTURE)>=90)
+				current_state = LANDED;
+			else
 				current_state = EMERGENCY;
 			break;
 	  }
@@ -308,7 +324,7 @@ gesturestype gesture_detected = NON_GESTURE;
 drone_state current_state = LANDED;
 visual_object_detector::DetectObject detector_srv;
 ardrone_autonomy::CamSelect drone_cam_srv;
-std::string drone_control_status;
+
 
 //Physical user data
 std::vector<double> heights;
@@ -321,7 +337,9 @@ nh_.getParam("/drone_control_node/delta_pose", dPose);
 ros::Subscriber optitrack_leader_sub_=nh_.subscribe("leader_pose_topic", 1, hasReceivedLeaderState);
 ros::Subscriber optitrack_marker_leader_1_sub_=nh_.subscribe("marker_leader_1_pose_topic", 1, hasReceivedMarkerLeader1State);
 ros::Subscriber optitrack_marker_leader_2_sub_=nh_.subscribe("marker_leader_2_pose_topic", 1, hasReceivedMarkerLeader2State);
-ros::Subscriber optitrack_drone_sub_=nh_.subscribe("drone_pose_topic", 1, hasReceivedMDroneState);
+ros::Subscriber optitrack_drone_control_sub_=nh_.subscribe("drone_control_topic", 1, hasReceivedDroneControlState);
+ros::Subscriber drone_navdata_sub = nh_.subscribe("/ardrone/navdata", 1, hasReceivedNavdataInfo);
+
 ros::Publisher demo_info_pub_=nh_.advertise<drone_control_msgs::demo_info>("demo_info_topic",1);
 ros::Publisher takeoff_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/takeoff",1);
 ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
@@ -334,13 +352,10 @@ ros::ServiceClient drone_cam_client =  nh_.serviceClient<ardrone_autonomy::CamSe
 	// Main loop
 	while (ros::ok()){
 
-	// Check the drone status
-	nh_.getParam("/drone_control_node/status",drone_control_status);
-
 	// add the gesture detected to the gestures queue
 	gesture_detected = gesture_detector(heights, leader_id);
 	gestures_buffer(gesture_detected);
-	drone_status(current_state, takeoff_pub_, land_pub_, nh_, detector_client, detector_srv, drone_cam_client, drone_cam_srv,drone_control_status);
+	drone_status(current_state, takeoff_pub_, land_pub_, nh_, detector_client, detector_srv, drone_cam_client, drone_cam_srv);
 	
 	// Publishing node topic
 	data_out.gesture_detected = gestures[gesture_detected];
