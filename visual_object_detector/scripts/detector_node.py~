@@ -20,7 +20,7 @@ def handle_detect_object(req):
     """Return a response with value -1 if an error occured else the value returned by the object detector (a positive integer)"""
 
     try:
-        cv_frame = cv_bridge.imgmsg_to_cv(image_data)
+        cv_frame = cv_bridge.imgmsg_to_cv2(image_data)
         detection=detect_object(cv_frame)
         return DetectObjectResponse(detection)
     except Exception as e:

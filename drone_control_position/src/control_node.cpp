@@ -21,7 +21,7 @@
 geometry_msgs::Twist velocityMsg;
 drone_control_msgs::drone_control_info publish_data;
 double errorAntPitch, errorAntRoll, VxDrone, VyDrone;
-std::vector<double> PointsDroneFrame(4,0), Drone_info(4,0), Target_point_info(4,0),virtual_fence (5); // [maxX, minX, maxY, minY, maxAltitude]
+std::vector<double> PointsDroneFrame(4,0), Drone_info(4,0), Target_point_info(4,0), dPose (4,0), virtual_fence (5); // [maxX, minX, maxY, minY, maxAltitude]
 std::vector<float> drone_quaternion (4,0); 
 
 
@@ -138,9 +138,9 @@ void WorldToDroneframe(double targetX, double targetY, double angle){
 	publish_data.framePosition.x=PointsDroneFrame[0];
 	publish_data.framePosition.y=PointsDroneFrame[1];
 	publish_data.framePosition.z=Drone_info[2];
-	publish_data.frameTarget.x=PointsDroneFrame[2];
-	publish_data.frameTarget.y=PointsDroneFrame[3];
-	publish_data.frameTarget.z=Target_point_info[2];
+	publish_data.frameTarget.x=PointsDroneFrame[2]+dPose[0];
+	publish_data.frameTarget.y=PointsDroneFrame[3]+dPose[1];
+	publish_data.frameTarget.z=Target_point_info[2]+dPose[2];
 }
 
 void ControlPitch(double actualX, double targetX, double velocity_limit, double Kp, double Kd, double fs){
@@ -187,7 +187,7 @@ ros::NodeHandle nh_;
 ros::Rate rate(20.0);
 
 double fs=20;
-std::vector<double> dPose (4,0), Kp (4,0), Kd (2,0), velocity_limit(4,0);
+std::vector<double> Kp (4,0), Kd (2,0), velocity_limit(4,0);
 
 ros::Subscriber optitrack_sub_=nh_.subscribe("drone_info_topic", 10, hasReceivedModelState);
 ros::Subscriber contol_sub = nh_.subscribe("control_info", 10, hasReceivedControlInfo);

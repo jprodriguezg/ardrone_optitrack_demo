@@ -24,7 +24,7 @@ enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLL
 enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER,MISSION,EMERGENCY};
 
 // Some global variables
-std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), DroneFrame(2,0), GestureMarkerFrame(2,0), mission_pose (4,0), dPose (4,0); 
+std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), TargetControlFrames(4,0), GestureMarkerFrame(2,0), mission_pose (4,0), dPose (4,0); 
 std::vector<float> quaternion1 (4,0), quaternion2 (4,0);
 std::vector<float> leaders_id(2,0);  // Posible leaders ids
 std::deque<gesturestype> gestures_queue (40,NON_GESTURE);
@@ -93,6 +93,13 @@ void hasReceivedDroneControlState(const drone_control_msgs::drone_control_info::
 	drone_info[1] = msg->position.y;
 	drone_info[2] = msg->position.z;
 	drone_info[3] = msg->yaw;
+
+	TargetControlFrames[0] = msg->framePosition.x;
+	TargetControlFrames[1] = msg->framePosition.y;
+
+	TargetControlFrames[0] = msg->frameTarget.x;
+	TargetControlFrames[1] = msg->frameTarget.y;
+
   return;
 } 
 
@@ -104,7 +111,6 @@ void hasReceivedNavdataInfo(const ardrone_autonomy::NavdataConstPtr msg){
 
 // Functions
 void WorldToLeaderframe(double angle){
-
 	
 	angle=(PI*angle)/180;
 	LeaderFrame[0] = cos(angle)*leader_info[0]+sin(angle)*leader_info[1];
@@ -117,12 +123,10 @@ void WorldToLeaderframe(double angle){
 		GestureMarkerFrame[0] = cos(angle)*leader2_marker_info[0]+sin(angle)*leader2_marker_info[1];
 		GestureMarkerFrame[1] = -sin(angle)*leader2_marker_info[0]+cos(angle)*leader2_marker_info[1];
 	}
-	DroneFrame[0] = cos(angle)*drone_info[0]+sin(angle)*drone_info[1];
-	DroneFrame[1] = -sin(angle)*drone_info[0]+cos(angle)*drone_info[1];
 }
 
 gesturestype gesture_detector(std::vector<double> heights, int id){
-	
+
 	double shoulder_height = 1.55, arm_longitud = 0.6, shoulder_longitude = 0.25;  // For a person with 1.80 m of height
 	gesturestype gesture_out;
 	double current_leader_marker_altitude = 0;
@@ -253,7 +257,7 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 		case MISSION: 
 			if (drone_control_status == "Emergency")
 				current_state = EMERGENCY;
-			else if (DroneFrame[0] >= LeaderFrame[0]-dPose[0]-0.05 && DroneFrame[0] <= LeaderFrame[0]-dPose[0]+0.05 && DroneFrame[1] >= LeaderFrame[1]-dPose[1]-0.05 && DroneFrame[1] <= LeaderFrame[1]-dPose[1]+0.05 && abs(VxDrone)<30 && abs(VyDrone)<30){ // Start Mission condition
+			else if (TargetControlFrames[0] >= TargetControlFrames[2]-0.05 && TargetControlFrames[0] <= TargetControlFrames[2]+0.05 && TargetControlFrames[1] >= TargetControlFrames[3]-0.1 && TargetControlFrames[1] <= TargetControlFrames[3]+0.1 && abs(VxDrone)<30 && abs(VyDrone)<30){ // Start Mission condition
 			//else if (abs(VxDrone)<30 && abs(VyDrone)<30 && drone_info[2]>=mission_pose[2]-0.5 && drone_info[2]<=mission_pose[2]+0.5){
 
 				if (detector_client.call(detector_srv))
@@ -261,10 +265,12 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 				else
 					std::cout <<"Failed to call service detect_object"<<std::endl;
 
-				if (detector_flag == 0 || detector_flag == -1) // No object detected
+				if (detector_flag == 0 || detector_flag == -1){ // No object detected
 					current_state = FOLLOWING_LEADER;
-				else // Something has been detected
+					std::cout <<"No object detected"<<std::endl;}
+				else{ // Something has been detected
 					current_state = HOVERING;
+					std::cout <<"An Object has been detected"<<std::endl;}
 
 				drone_cam_client.call(drone_cam_srv);
 				}
@@ -274,13 +280,15 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 				}
 			else
 				current_state = MISSION;
-
+			/*
 			std::cout <<" X conditions " <<std::endl;
-			std::cout <<DroneFrame[0] << " >= " <<  LeaderFrame[0]+dPose[0]-0.05 <<std::endl;
-			std::cout <<DroneFrame[0] << " <= " <<  LeaderFrame[0]+dPose[0]+0.05 <<std::endl;
+			std::cout <<TargetControlFrames[0] << " >= " <<  TargetControlFrames[2]-0.05 <<std::endl;
+			std::cout <<TargetControlFrames[0] << " <= " <<  TargetControlFrames[2]+0.05 <<std::endl;
 			std::cout <<" Y conditions " <<std::endl;
-			std::cout <<DroneFrame[1] << " >= " <<  LeaderFrame[1]+dPose[1]-0.05 <<std::endl;
-			std::cout <<DroneFrame[1] << " <= " <<  LeaderFrame[1]+dPose[1]+0.05 <<std::endl;
+			std::cout <<TargetControlFrames[1] << " >= " <<  TargetControlFrames[3]-0.15 <<std::endl;
+			std::cout <<TargetControlFrames[1] << " <= " <<  TargetControlFrames[3]+0.15 <<std::endl;
+			std::cout <<" Velocity conditions " <<std::endl;
+			std::cout <<"VX   "<<abs(VxDrone)<< " VY   " <<abs(VyDrone)<<std::endl;*/
 
 			break;
 		case EMERGENCY: 
