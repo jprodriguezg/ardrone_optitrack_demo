@@ -24,7 +24,7 @@ enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLL
 enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER,MISSION,EMERGENCY};
 
 // Some global variables
-std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), DroneFrame(2,0), GestureMarkerFrame(2,0), dPose (4,0); 
+std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), DroneFrame(2,0), GestureMarkerFrame(2,0), mission_pose (4,0), dPose (4,0); 
 std::vector<float> quaternion1 (4,0), quaternion2 (4,0);
 std::vector<float> leaders_id(2,0);  // Posible leaders ids
 std::deque<gesturestype> gestures_queue (40,NON_GESTURE);
@@ -253,8 +253,8 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 		case MISSION: 
 			if (drone_control_status == "Emergency")
 				current_state = EMERGENCY;
-			//else if (DroneFrame[0] >= LeaderFrame[0]+dPose[0]-0.05 && DroneFrame[0] <= LeaderFrame[0]+dPose[0]+0.05 && DroneFrame[1] >= LeaderFrame[1]+dPose[1]-0.05 && DroneFrame[1] <= LeaderFrame[1]+dPose[1]+0.05){ // Start Mission condition
-			else if (abs(VxDrone)<30 || abs(VyDrone)<30){
+			else if (DroneFrame[0] >= LeaderFrame[0]-dPose[0]-0.05 && DroneFrame[0] <= LeaderFrame[0]-dPose[0]+0.05 && DroneFrame[1] >= LeaderFrame[1]-dPose[1]-0.05 && DroneFrame[1] <= LeaderFrame[1]-dPose[1]+0.05 && abs(VxDrone)<30 && abs(VyDrone)<30){ // Start Mission condition
+			//else if (abs(VxDrone)<30 && abs(VyDrone)<30 && drone_info[2]>=mission_pose[2]-0.5 && drone_info[2]<=mission_pose[2]+0.5){
 
 				if (detector_client.call(detector_srv))
 					detector_flag = detector_srv.response.output; 
@@ -331,7 +331,8 @@ std::vector<double> heights;
 nh_.getParam("/gestures_node/leaders_heights",heights);
 nh_.getParam("/gestures_node/leaders_id",leaders_id);
 nh_.getParam("/leader_selector/leader_id",leader_id);
-nh_.getParam("/drone_control_node/delta_pose", dPose);
+nh_.getParam("/gestures_node/mission_target",mission_pose);
+nh_.getParam("/drone_control_node/delta_pose",dPose);
 
 // Publishers and subscribers
 ros::Subscriber optitrack_leader_sub_=nh_.subscribe("leader_pose_topic", 1, hasReceivedLeaderState);
