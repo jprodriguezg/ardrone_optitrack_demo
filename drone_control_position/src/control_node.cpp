@@ -232,7 +232,7 @@ srv.request.duration = 0;
 			}
 		
 			publish_data.mode = "Emergency";
-			nh_.setParam("/drone_control_node/status","Emergency");
+			drone_info_pub_.publish(publish_data); // Only to publish the Emergency status
 			ros::Duration(0.5).sleep();
 			break;
 			}

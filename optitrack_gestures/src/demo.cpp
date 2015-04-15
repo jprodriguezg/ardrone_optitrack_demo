@@ -24,7 +24,7 @@ enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLL
 enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER,MISSION,EMERGENCY};
 
 // Some global variables
-std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), TargetControlFrames(4,0), GestureMarkerFrame(2,0), mission_pose (4,0), dPose (4,0); 
+std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), TargetControlFrames(4,0), GestureMarkerFrame(2,0), mission_pose (4,0); 
 std::vector<float> quaternion1 (4,0), quaternion2 (4,0);
 std::vector<float> leaders_id(2,0);  // Posible leaders ids
 std::deque<gesturestype> gestures_queue (40,NON_GESTURE);
@@ -97,8 +97,8 @@ void hasReceivedDroneControlState(const drone_control_msgs::drone_control_info::
 	TargetControlFrames[0] = msg->framePosition.x;
 	TargetControlFrames[1] = msg->framePosition.y;
 
-	TargetControlFrames[0] = msg->frameTarget.x;
-	TargetControlFrames[1] = msg->frameTarget.y;
+	TargetControlFrames[2] = msg->frameTarget.x;
+	TargetControlFrames[3] = msg->frameTarget.y;
 
   return;
 } 
@@ -340,7 +340,6 @@ nh_.getParam("/gestures_node/leaders_heights",heights);
 nh_.getParam("/gestures_node/leaders_id",leaders_id);
 nh_.getParam("/leader_selector/leader_id",leader_id);
 nh_.getParam("/gestures_node/mission_target",mission_pose);
-nh_.getParam("/drone_control_node/delta_pose",dPose);
 
 // Publishers and subscribers
 ros::Subscriber optitrack_leader_sub_=nh_.subscribe("leader_pose_topic", 1, hasReceivedLeaderState);
