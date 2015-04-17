@@ -17,6 +17,7 @@
 #include <drone_control_msgs/drone_control_info.h>
 #include <visual_object_detector/DetectObject.h>
 #include <ardrone_autonomy/CamSelect.h>
+#include <ardrone_autonomy/CamSelectRequest.h>
 # define PI           3.14159265358979323846
 
 // Defining de gesturetype and drone_state varibles
@@ -248,6 +249,7 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 				}
 			else if (find_gesture(0,20,MISSION_GESTURE)>=90){
 				current_state = MISSION;
+				drone_cam_srv.request.channel = 1;
 				drone_cam_client.call(drone_cam_srv);
 				}
 			else
@@ -271,7 +273,7 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 				else{ // Something has been detected
 					current_state = HOVERING;
 					std::cout <<"An Object has been detected"<<std::endl;}
-
+				drone_cam_srv.request.channel = 0;
 				drone_cam_client.call(drone_cam_srv);
 				}
 			else if (find_gesture(0,20,LAND_GESTURE)>=90){
@@ -332,6 +334,7 @@ gesturestype gesture_detected = NON_GESTURE;
 drone_state current_state = LANDED;
 visual_object_detector::DetectObject detector_srv;
 ardrone_autonomy::CamSelect drone_cam_srv;
+//ardrone_autonomy::CamSelectRequest drone_cam_srv;
 
 
 //Physical user data
@@ -354,8 +357,7 @@ ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
 
 // Services
 ros::ServiceClient detector_client = nh_.serviceClient<visual_object_detector::DetectObject>("/detect_object");
-ros::ServiceClient drone_cam_client =  nh_.serviceClient<ardrone_autonomy::CamSelect>("/ardrone/togglecam");
-
+ros::ServiceClient drone_cam_client =  nh_.serviceClient<ardrone_autonomy::CamSelect>("ardrone/setcamchannel");
 	
 	// Main loop
 	while (ros::ok()){
