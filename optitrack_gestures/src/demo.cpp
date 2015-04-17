@@ -259,7 +259,7 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 		case MISSION: 
 			if (drone_control_status == "Emergency")
 				current_state = EMERGENCY;
-			else if (TargetControlFrames[0] >= TargetControlFrames[2]-0.1 && TargetControlFrames[0] <= TargetControlFrames[2]+0.1 && TargetControlFrames[1] >= TargetControlFrames[3]-0.1 && TargetControlFrames[1] <= TargetControlFrames[3]+0.1 && abs(VxDrone)<50 && abs(VyDrone)<50){ // Start Mission condition (x position, y position, vel condition)
+			else if (TargetControlFrames[0] >= TargetControlFrames[2]-0.2 && TargetControlFrames[0] <= TargetControlFrames[2]+0.2 && TargetControlFrames[1] >= TargetControlFrames[3]-0.2 && TargetControlFrames[1] <= TargetControlFrames[3]+0.2 && abs(VxDrone)<50 && abs(VyDrone)<50){ // Start Mission condition (x position, y position, vel condition)
 
 				if (detector_client.call(detector_srv))
 					detector_flag = detector_srv.response.output; 
@@ -296,9 +296,6 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 
 			break;
 		case EMERGENCY: 
-			if (find_gesture(0,20,LAND_GESTURE)>=90)
-				current_state = LANDED;
-			else
 				current_state = EMERGENCY;
 			break;
 	  }

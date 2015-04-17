@@ -148,9 +148,16 @@ void ControlPitch(double actualX, double targetX, double velocity_limit, double 
 	double vel, error, ts= 1/fs;
 	error = (targetX-actualX);
 	vel = error*Kp + ((error-errorAntPitch)/ts)*Kd;	
+	
 	// Limit velocity
-	vel=std::min(velocity_limit,vel);
-	vel=std::max(-velocity_limit,vel);
+	if (abs(abs(Drone_info[3])-abs(Target_point_info[3]+dPose[3]))>60){
+		vel=std::min(0.05,vel);
+		vel=std::max(-0.05,vel);
+	}
+	else{
+		vel=std::min(velocity_limit,vel);
+		vel=std::max(-velocity_limit,vel);
+	}
 	velocityMsg.linear.x = vel;
 	errorAntPitch = error;
 	publish_data.vel.x=velocityMsg.linear.x;	
@@ -161,9 +168,16 @@ void ControlRoll(double actualY, double targetY, double velocity_limit, double K
 	double vel, error, ts= 1/fs;
 	error = (targetY-actualY);
 	vel = error*Kp + ((error-errorAntRoll)/ts)*Kd;
+	
 	// Limit velocity
-	vel=std::min(velocity_limit,vel);
-	vel=std::max(-velocity_limit,vel);
+	if (abs(abs(Drone_info[3])-abs(Target_point_info[3]+dPose[3]))>60){
+		vel=std::min(0.08,vel);
+		vel=std::max(-0.08,vel);
+	}
+	else{
+		vel=std::min(velocity_limit,vel);
+		vel=std::max(-velocity_limit,vel);
+	}
 	velocityMsg.linear.y = vel;
 	errorAntRoll = error;
 	publish_data.vel.y=velocityMsg.linear.y;	
