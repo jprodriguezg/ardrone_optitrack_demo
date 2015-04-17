@@ -162,8 +162,8 @@ gesturestype gesture_detector(std::vector<double> heights, int id){
 		GestureMarkerFrame[1] >= LeaderFrame[1]+arm_longitud-0.2 && GestureMarkerFrame[1] <= LeaderFrame[1]+arm_longitud+0.2)
 		gesture_out = TAKEOFF_GESTURE;
 	//HOVERING CONDITION (altitude, x position, y position) -- Controlled by both leaders
-	else if(current_leader_marker_altitude >= shoulder_height -0.1 && current_leader_marker_altitude <= shoulder_height + 0.1 &&
-		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.2 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.2 && GestureMarkerFrame[1] >= LeaderFrame[1]-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]+0.1)
+	else if(current_leader_marker_altitude >= shoulder_height -0.2 && current_leader_marker_altitude <= shoulder_height + 0.2 &&
+		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.2 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.2 && GestureMarkerFrame[1] >= LeaderFrame[1]-0.2 && GestureMarkerFrame[1] <= LeaderFrame[1]+0.2)
 		gesture_out = HOVERING_GESTURE;
 	// MISSION CONDITION (altitude, x position, y position) -- Controlled by both leaders
 	else if(current_leader_marker_altitude >= shoulder_height -0.1 && current_leader_marker_altitude <= shoulder_height + 0.1 &&
@@ -259,8 +259,7 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 		case MISSION: 
 			if (drone_control_status == "Emergency")
 				current_state = EMERGENCY;
-			else if (TargetControlFrames[0] >= TargetControlFrames[2]-0.05 && TargetControlFrames[0] <= TargetControlFrames[2]+0.05 && TargetControlFrames[1] >= TargetControlFrames[3]-0.1 && TargetControlFrames[1] <= TargetControlFrames[3]+0.1 && abs(VxDrone)<30 && abs(VyDrone)<30){ // Start Mission condition
-			//else if (abs(VxDrone)<30 && abs(VyDrone)<30 && drone_info[2]>=mission_pose[2]-0.5 && drone_info[2]<=mission_pose[2]+0.5){
+			else if (TargetControlFrames[0] >= TargetControlFrames[2]-0.1 && TargetControlFrames[0] <= TargetControlFrames[2]+0.1 && TargetControlFrames[1] >= TargetControlFrames[3]-0.1 && TargetControlFrames[1] <= TargetControlFrames[3]+0.1 && abs(VxDrone)<50 && abs(VyDrone)<50){ // Start Mission condition (x position, y position, vel condition)
 
 				if (detector_client.call(detector_srv))
 					detector_flag = detector_srv.response.output; 
@@ -269,12 +268,10 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 
 				if (detector_flag == 0 || detector_flag == -1){ // No object detected
 					current_state = FOLLOWING_LEADER;
-					std::cout <<"No object detected"<<std::endl;}
+					std::cout <<"None object detected"<<std::endl;}
 				else{ // Something has been detected
 					current_state = HOVERING;
 					std::cout <<"An Object has been detected"<<std::endl;}
-				drone_cam_srv.request.channel = 0;
-				drone_cam_client.call(drone_cam_srv);
 				}
 			else if (find_gesture(0,20,LAND_GESTURE)>=90){
 				current_state = LANDED;
@@ -282,6 +279,11 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 				}
 			else
 				current_state = MISSION;
+
+			if (current_state != MISSION){
+				drone_cam_srv.request.channel = 0;
+				drone_cam_client.call(drone_cam_srv);
+			}
 			/*
 			std::cout <<" X conditions " <<std::endl;
 			std::cout <<TargetControlFrames[0] << " >= " <<  TargetControlFrames[2]-0.05 <<std::endl;

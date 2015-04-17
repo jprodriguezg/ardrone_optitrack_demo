@@ -21,7 +21,7 @@
 	<node name="leader_selector" pkg="drone_following_leader" type="leader_selector_node" output="screen">
 		<remap from="rigied_bodies_topic"  to="/optitrack/rigid_bodies"/>
 		<remap from="leader_info_topic"  to="/leader_info_topic"/>
-		<param name="leader_id" value="4"/>
+		<param name="leader_id" value="2"/>
 	</node>
 
 	<node name="gestures_node" pkg="optitrack_gestures" type="optitrack_gestures_demo" output="screen">
@@ -32,7 +32,7 @@
 		<remap from="demo_info_topic"  to="/demo"/>
 		<rosparam>leaders_heights: [1.78, 1.80]</rosparam>	
 		<rosparam>leaders_id: [2, 3]</rosparam>	
-		<rosparam>mission_target: [-0.5, 0.0, 1.0, 180]</rosparam> <!-- [x + dposeX, y + dposeY ,z + dPosez ,yaw (degrees)] -->
+		<rosparam>mission_target: [-1.25, 0.0, 1.0, 180]</rosparam> <!-- [x + dposeX, y + dposeY ,z + dPosez ,yaw(degrees)] -->
 	</node>
 
 	<node name="drone_target_points" pkg="drone_following_leader" type="leader_desired_position_node" output="screen">
@@ -50,7 +50,7 @@
 		<rosparam>Kp: [0.2, 0.2,  0.5, 0.0125]</rosparam>  <!-- [pitch, roll, altitude, yaw] --><!-- 0.25 0.25 0.5 0.0125-->
 		<rosparam>velocity_limit: [0.2, 0.2, 1.0, 1.0]</rosparam>  <!-- [pitch, roll, altitude, yaw] -->
 		<rosparam>delta_pose: [-1.5, 0.0, 0.0, 0.0]</rosparam>  <!-- [x,y,z,yaw (degrees)] -->
-		<rosparam>virtual_fence: [3.0, -1.8, 2.0, -2.5, 2.25]</rosparam>  <!-- [maxX, minX, maxY, minY, maxAltitude] -->
+		<rosparam>virtual_fence: [3.0, -1.8, 2.5, -2.4, 2.25]</rosparam>  <!-- [maxX, minX, maxY, minY, maxAltitude] -->
 	
 	</node>
 
