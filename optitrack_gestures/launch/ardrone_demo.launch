@@ -1,0 +1,36 @@
+<!-- This is a sample lanuch file, please change it based on your needs -->
+<launch>
+	<node name="ardrone_driver" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" clear_params="true">
+	    
+	<!-- Modifies the drone's onboard parameters. If not specified, drone default will be used (consult SDK or ardrone_autonomy wiki) -->
+	    <param name="max_bitrate" value="2000" />
+	    <param name="bitrate" value="2000" />
+	    <param name="video_codec" value="129" />
+	    
+	    <param name="do_imu_caliberation" value="true" />
+	    <param name="tf_prefix" value="mydrone" />
+	    
+	<!-- Enables the new-style, full information navdata packets. If not specified, defaults to FALSE -->
+		<param name="enable_navdata_time" value="true" />
+		<param name="enable_navdata_raw_measures" value="true" />
+		<param name="enable_navdata_phys_measures" value="true" />
+		<param name="enable_navdata_gyros_offsets" value="true" />
+		<param name="enable_navdata_euler_angles" value="true" />
+		<param name="enable_navdata_altitude" value="true" />
+		<param name="enable_navdata_video_stream" value="true" />
+		<param name="enable_navdata_zimmu_3000" value="true" />
+
+	<!-- Tunes the speed at which the ros loop runs, and thus, the rate at which navdata is published -->
+		<param name="looprate" value="50" />
+
+	<!-- Do we want to publish new-style navdata when received (true), or every time the ros-loop runs (false)? -->
+	<!-- (does not affect legacy navdata, which is always published at ros-loop rate) -->
+		<param name="realtime_navdata" value="true" />
+		<param name="realtime_video" value="true" />
+
+	<!-- Covariance Values (3x3 matrices reshaped to 1x9)-->
+        <rosparam param="cov/imu_la">[0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.1]</rosparam>
+        <rosparam param="cov/imu_av">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]</rosparam>
+        <rosparam param="cov/imu_or">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 100000.0]</rosparam>
+	</node>
+</launch>
