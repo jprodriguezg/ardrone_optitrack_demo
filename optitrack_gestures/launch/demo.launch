@@ -3,7 +3,7 @@
 
   	<node name="soundplay_node" pkg="sound_play" type="soundplay_node.py"/>
 
-	<node name="detect_object_node" pkg="visual_object_detector" type="detector_node.py">
+	<node name="detect_object_node" pkg="visual_object_detector" type="detector_node.py" output="screen">
 		<remap from="input_image"  to="/ardrone/image_raw"/>
 	</node>
 
