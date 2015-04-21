@@ -16,7 +16,8 @@
 
 // Some global variables
 drone_control_msgs::send_control_data leader_publish_data;
-std::vector<double> Leader_info (4,0), virtual_fence (5), ant_pose(4,0), initial_pose(4,0), mission_pose (4,0), dPose (4,0), drone_info (4,0), TargetControlFrames(4,0), dNewPose (4,0); 
+std::vector<double> Leader_info (4,0), virtual_fence (5), ant_pose(4,0), initial_pose(4,0), mission_pose (4,0), dPose (4,0), drone_info (4,0), TargetControlFrames(4,0), dNewPose (4,0),
+dDetectedVisionPose (4,0); 
 std::string drone_status = "landed", last_status = "landed";
 
 // Define callbacks 
@@ -98,6 +99,7 @@ ros::Publisher leader_info_pub_=nh_.advertise<drone_control_msgs::send_control_d
 
 nh_.getParam("/drone_target_points/initial_pose",initial_pose);
 nh_.getParam("/gestures_node/mission_target",mission_pose);
+nh_.getParam("/gestures_node/delta_pose_vision",dDetectedVisionPose);
 nh_.getParam("/drone_control_node/delta_pose", dPose);
 
 ant_pose = initial_pose;
@@ -107,7 +109,10 @@ ant_pose = initial_pose;
 	nh_.getParam("/drone_control_node/virtual_fence",virtual_fence);
 
 	if (last_status != drone_status){
-		if (last_status == "following_leader" || last_status == "landed")
+		//if (last_status == "following_leader" || last_status == "landed")
+		if (drone_status == "hovering" &&  last_status == "mission_mode")
+			nh_.setParam("/drone_control_node/delta_pose",dDetectedVisionPose);
+		else if (drone_status == "hovering" || drone_status == "mission_mode")
 			nh_.setParam("/drone_control_node/delta_pose",dNewPose);
 		else
 			nh_.setParam("/drone_control_node/delta_pose",dPose);

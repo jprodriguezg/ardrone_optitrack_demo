@@ -32,7 +32,8 @@
 		<remap from="demo_info_topic"  to="/demo"/>
 		<rosparam>leaders_heights: [1.78, 1.80]</rosparam>	
 		<rosparam>leaders_id: [2, 3]</rosparam>	
-		<rosparam>mission_target: [-1.25, 0.0, 1.0, 180]</rosparam> <!-- [x + dposeX, y + dposeY ,z + dPosez ,yaw(degrees)] -->
+		<rosparam>mission_target: [-1.15, 0.0, 1.0, 180]</rosparam>
+		<rosparam>delta_pose_vision: [0.0, 0.0, 1.0, -180.0]</rosparam> 
 	</node>
 
 	<node name="drone_target_points" pkg="drone_following_leader" type="leader_desired_position_node" output="screen">
@@ -40,7 +41,7 @@
 		<remap from="desired_leader_position_topic"  to="/drone_target_points"/>
 		<remap from="drone_control_topic"  to="/drone_control_info"/>
 		<remap from="demo_node_topic"  to="/demo"/>
-		<rosparam>initial_pose: [0.0, 0.0, 1.0, 0.0]</rosparam> <!-- [x + dposeX, y + dposeY ,z + dPosez ,yaw (degrees)] -->
+		<rosparam>initial_pose: [0.0, 0.0, 1.0, 0.0]</rosparam> 
 	</node>
 
 	<node name="drone_control_node" pkg="drone_control_position" type="control_drone_position_node" output="screen">
