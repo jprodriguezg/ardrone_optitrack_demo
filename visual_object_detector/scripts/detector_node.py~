@@ -3,6 +3,8 @@
 from visual_object_detector.srv import *
 import rospy
 import random
+import cv2
+import numpy as np
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -14,14 +16,33 @@ def detect_object(cv_frame):
     """Return 0 if no object were found, or a positive integer <class> if an object
     of class <class> was found."""
 
-    return random.randint(0,1)    
+    imghsv = cv2.cvtColor(cv_frame, cv2.COLOR_BGR2HSV)
+
+    # define range of red color in HSV
+    lower_red = np.array([0, 200,0])
+    upper_red = np.array([10,255,200])
+
+    # Threshold the HSV image to get only red colors
+    mask1 = cv2.inRange(imghsv, lower_red, upper_red)
+
+    lower_red = np.array([169, 200,0])
+    upper_red = np.array([179, 255,200])
+
+    # Threshold the HSV image to get only red colors
+    mask2 = cv2.inRange(imghsv, lower_red, upper_red)
+
+    mask = cv2.bitwise_or(mask1, mask2);
+    nz = float(cv2.countNonZero(mask))/mask.size;
+    det = nz > 0.004;
+    print '', nz, ' ', det
+    if(det):
+       	return 1
+    else:
+	return 0
 
 def handle_detect_object(req):
     """Return a response with value -1 if an error occured else the value returned by the object detector (a positive integer)"""
-
-
     try:
-	
         cv_frame = cv_bridge.imgmsg_to_cv2(image_data)
         detection=detect_object(cv_frame)
         return DetectObjectResponse(detection)

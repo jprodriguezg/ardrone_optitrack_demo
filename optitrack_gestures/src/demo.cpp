@@ -199,7 +199,15 @@ double find_gesture(int begin, int end, gesturestype search_gesture){
 	return out;
 }
 
-void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publisher &land, ros::NodeHandle &nh_, ros::ServiceClient &detector_client, visual_object_detector::DetectObject &detector_srv, ros::ServiceClient &drone_cam_client, ardrone_autonomy::CamSelect &drone_cam_srv){
+void garbage(ros::Publisher demo_info_pub_, std::map<drone_state,std::string> status, drone_control_msgs::demo_info data_out,drone_state current_state){
+
+	data_out.demo_status = status[current_state];
+	demo_info_pub_.publish(data_out);
+}
+
+
+void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publisher &land, ros::NodeHandle &nh_, ros::ServiceClient &detector_client, visual_object_detector::DetectObject &detector_srv, ros::ServiceClient &drone_cam_client, ardrone_autonomy::CamSelect &drone_cam_srv, /**/ros::Publisher demo_info_pub_, std::map<drone_state,std::string> status,
+drone_control_msgs::demo_info data_out){
 
 	std_msgs::Empty EmptyMsg;
 	switch (current_state) {
@@ -267,9 +275,13 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 					std::cout <<"Failed to call service detect_object"<<std::endl;
 
 				if (detector_flag == 0 || detector_flag == -1){ // No object detected
+					//garbage(demo_info_pub_,status,data_out,current_state);
+					//ros::Duration(3.0).sleep();
 					current_state = FOLLOWING_LEADER;
 					std::cout <<"None object detected"<<std::endl;}
 				else{ // Something has been detected
+					//garbage(demo_info_pub_,status,data_out,current_state);
+					//ros::Duration(3.0).sleep();
 					current_state = HOVERING;
 					std::cout <<"An Object has been detected"<<std::endl;}
 				}
@@ -300,6 +312,8 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 			break;
 	  }
 }
+
+
 
 
 int main(int argc, char** argv){
@@ -364,7 +378,8 @@ ros::ServiceClient drone_cam_client =  nh_.serviceClient<ardrone_autonomy::CamSe
 	// add the gesture detected to the gestures queue
 	gesture_detected = gesture_detector(heights, leader_id);
 	gestures_buffer(gesture_detected);
-	drone_status(current_state, takeoff_pub_, land_pub_, nh_, detector_client, detector_srv, drone_cam_client, drone_cam_srv);
+	drone_status(current_state, takeoff_pub_, land_pub_, nh_, detector_client, detector_srv, drone_cam_client, drone_cam_srv,
+	demo_info_pub_, status, data_out);
 	
 	// Publishing node topic
 	data_out.gesture_detected = gestures[gesture_detected];
