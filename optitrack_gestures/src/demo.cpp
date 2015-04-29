@@ -18,6 +18,7 @@
 #include <visual_object_detector/DetectObject.h>
 #include <ardrone_autonomy/CamSelect.h>
 #include <ardrone_autonomy/CamSelectRequest.h>
+#include <drone_feedback_signals/demo_sounds.h>
 # define PI           3.14159265358979323846
 
 // Defining de gesturetype and drone_state varibles
@@ -206,8 +207,7 @@ void garbage(ros::Publisher demo_info_pub_, std::map<drone_state,std::string> st
 }
 
 
-void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publisher &land, ros::NodeHandle &nh_, ros::ServiceClient &detector_client, visual_object_detector::DetectObject &detector_srv, ros::ServiceClient &drone_cam_client, ardrone_autonomy::CamSelect &drone_cam_srv, /**/ros::Publisher demo_info_pub_, std::map<drone_state,std::string> status,
-drone_control_msgs::demo_info data_out){
+void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publisher &land, ros::NodeHandle &nh_, ros::ServiceClient &detector_client, visual_object_detector::DetectObject &detector_srv, ros::ServiceClient &drone_cam_client, ardrone_autonomy::CamSelect &drone_cam_srv){
 
 	std_msgs::Empty EmptyMsg;
 	switch (current_state) {
@@ -275,13 +275,9 @@ drone_control_msgs::demo_info data_out){
 					std::cout <<"Failed to call service detect_object"<<std::endl;
 
 				if (detector_flag == 0 || detector_flag == -1){ // No object detected
-					//garbage(demo_info_pub_,status,data_out,current_state);
-					//ros::Duration(3.0).sleep();
 					current_state = FOLLOWING_LEADER;
 					std::cout <<"None object detected"<<std::endl;}
 				else{ // Something has been detected
-					//garbage(demo_info_pub_,status,data_out,current_state);
-					//ros::Duration(3.0).sleep();
 					current_state = HOVERING;
 					std::cout <<"An Object has been detected"<<std::endl;}
 				}
@@ -344,10 +340,10 @@ std::map<drone_state,std::string> status;
 // Variables declaration 
 drone_control_msgs::demo_info data_out;
 gesturestype gesture_detected = NON_GESTURE;
-drone_state current_state = LANDED;
+drone_state ant_state, current_state = LANDED;
 visual_object_detector::DetectObject detector_srv;
 ardrone_autonomy::CamSelect drone_cam_srv;
-//ardrone_autonomy::CamSelectRequest drone_cam_srv;
+drone_feedback_signals::demo_sounds sound;
 
 
 //Physical user data
@@ -371,6 +367,7 @@ ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
 // Services
 ros::ServiceClient detector_client = nh_.serviceClient<visual_object_detector::DetectObject>("/detect_object");
 ros::ServiceClient drone_cam_client =  nh_.serviceClient<ardrone_autonomy::CamSelect>("ardrone/setcamchannel");
+ros::ServiceClient demo_sound_client = nh_.serviceClient<drone_feedback_signals::demo_sounds>("/demo_sounds");
 	
 	// Main loop
 	while (ros::ok()){
@@ -378,9 +375,41 @@ ros::ServiceClient drone_cam_client =  nh_.serviceClient<ardrone_autonomy::CamSe
 	// add the gesture detected to the gestures queue
 	gesture_detected = gesture_detector(heights, leader_id);
 	gestures_buffer(gesture_detected);
-	drone_status(current_state, takeoff_pub_, land_pub_, nh_, detector_client, detector_srv, drone_cam_client, drone_cam_srv,
-	demo_info_pub_, status, data_out);
+	drone_status(current_state, takeoff_pub_, land_pub_, nh_, detector_client, detector_srv, drone_cam_client, drone_cam_srv);
+
+
+	// Call the service to reproduce a feedback sound
 	
+	if (ant_state != current_state){
+			
+		
+		if (ant_state == MISSION && current_state == HOVERING){
+			sound.request.sound_name = "object_detected"; 
+			demo_sound_client.call(sound);
+			ros::Duration(4.0).sleep();}
+		else if (ant_state == MISSION && current_state == FOLLOWING_LEADER){
+			sound.request.sound_name = "no_object_found";
+			demo_sound_client.call(sound);
+			ros::Duration(4.0).sleep();}
+
+		if (current_state == EMERGENCY)
+			sound.request.sound_name = "Emergency";
+		else if (current_state == LANDED)
+			sound.request.sound_name = "landed";
+		else if(current_state == HOVERING)
+			sound.request.sound_name = "hovering";
+		else if(current_state == FOLLOWING_LEADER)
+			sound.request.sound_name = "following_leader";
+		else if(current_state == MISSION)
+			sound.request.sound_name = "mission_mode";
+
+		demo_sound_client.call(sound);
+		ant_state = current_state;
+	} 
+
+	
+
+
 	// Publishing node topic
 	data_out.gesture_detected = gestures[gesture_detected];
 	data_out.demo_status = status[current_state];

@@ -6,8 +6,20 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   sound_play
+  message_generation
 )
 
+## Generate services in the 'srv' folder
+ add_service_files(
+   FILES
+   demo_sounds.srv
+ )
+
+## Generate added messages and services with any dependencies listed here
+ generate_messages(
+   DEPENDENCIES
+   std_msgs
+ )
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -17,7 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## catkin specific configuration ##
 ###################################
 
-catkin_package()
+catkin_package(CATKIN_DEPENDS message_runtime)
 
 ###########
 ## Build ##
@@ -30,6 +42,10 @@ add_executable(feedback_signals_node src/feedback_signals.cpp)
 add_dependencies(feedback_signals_node drone_control_msgs_generate_messages_cpp)
 target_link_libraries(feedback_signals_node ${catkin_LIBRARIES})
 
+
+add_executable(demo_sounds_server src/demo_sounds_server.cpp)
+add_dependencies(demo_sounds_server drone_control_msgs_generate_messages_cpp)
+target_link_libraries(demo_sounds_server ${catkin_LIBRARIES})
 
 #############
 ## Install ##

@@ -42,9 +42,9 @@ ardrone_autonomy::LedAnim srv;
 srv.request.freq = fs/5;
 sound_play::SoundRequest sound_out;
 
-std::string learder_sound, hovering_sound, following_sound,mission_sound,emergency_sound,object_detected,no_object_found;
+std::string landed_sound, hovering_sound, following_sound,mission_sound,emergency_sound,object_detected,no_object_found;
 nh_.getParam("/drone_feedback_signals_node/emergency_sound",emergency_sound);
-nh_.getParam("/drone_feedback_signals_node/landed_sound",learder_sound);
+nh_.getParam("/drone_feedback_signals_node/landed_sound",landed_sound);
 nh_.getParam("/drone_feedback_signals_node/hovering_sound",hovering_sound);
 nh_.getParam("/drone_feedback_signals_node/following_sound",following_sound);
 nh_.getParam("/drone_feedback_signals_node/mission_sound",mission_sound);
@@ -73,23 +73,15 @@ nh_.getParam("/drone_feedback_signals_node/no_object_found",no_object_found);
 		srv.request.duration = 1.5;
 		srv.request.type = 4; // SNAKE_GREEN_RED
 		drone_led.call(srv);
-
+		/*
 		sound_out.sound = -2;
 		sound_out.command = 1;
 
-		// Sound status feedback
-			/*if (drone_status == "following_leader" && ant_status=="mission_mode"){
-				sound_out.arg = object_detected;
-				ant_status="landed";
-				flag=1;}
-			else if (drone_status == "hovering" && ant_status== "mission_mode"){
-				sound_out.arg = no_object_found;
-				ant_status="landed";
-				flag=1;}*/
+
 			if (drone_status == "Emergency")
 				sound_out.arg = emergency_sound;
 			else if (drone_status == "landed")
-				sound_out.arg = learder_sound;
+				sound_out.arg = landed_sound;
 			else if(drone_status == "hovering")
 				sound_out.arg = hovering_sound;
 			else if(drone_status == "following_leader")
@@ -97,13 +89,9 @@ nh_.getParam("/drone_feedback_signals_node/no_object_found",no_object_found);
 			else if(drone_status == "mission_mode")
 				sound_out.arg = mission_sound;
 
-		sound_pub_.publish(sound_out);
+		sound_pub_.publish(sound_out);*/
 		ant_status = drone_status;
-		/*if (flag == 1){
-			
-			flag = 0;
-		}*/
-		
+
 		}
 		
    	ros::spinOnce(); // if you were to add a subscription into this application, and did not have ros::spinOnce() here, your callbacks would never get called.

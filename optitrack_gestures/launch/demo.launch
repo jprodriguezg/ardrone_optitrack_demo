@@ -19,6 +19,8 @@
 		<param name="no_object_found" value="$(find drone_feedback_signals)/sounds/no_object_found.wav"/>
 	</node>
 
+	<node name="feedback_sounds_node" pkg="drone_feedback_signals" type="demo_sounds_server" output="screen">
+	</node>
 	
 	<node name="leader_selector" pkg="drone_following_leader" type="leader_selector_node" output="screen">
 		<remap from="rigied_bodies_topic"  to="/optitrack/rigid_bodies"/>
