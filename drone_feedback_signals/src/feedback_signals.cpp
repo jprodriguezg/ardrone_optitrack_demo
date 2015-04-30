@@ -33,7 +33,7 @@ ros::Rate rate(20.0);
 ros::Subscriber optitrack_demo_node_sub_=nh_.subscribe("demo_node_topic", 1, hasReceivedDemoinfo);
 ros::Subscriber alt_sub = nh_.subscribe("/ardrone/navdata", 10, hasReceivedNavdataInfo);
 ros::ServiceClient drone_led =  nh_.serviceClient<ardrone_autonomy::LedAnim>("/ardrone/setledanimation");
-ros::Publisher sound_pub_=nh_.advertise<sound_play::SoundRequest>("output_sound", 10);
+//ros::Publisher sound_pub_=nh_.advertise<sound_play::SoundRequest>("output_sound", 10);
 
 
 int BatteryFlag = 0, fs=20;
@@ -41,7 +41,7 @@ int BatteryFlag = 0, fs=20;
 ardrone_autonomy::LedAnim srv;
 srv.request.freq = fs/5;
 sound_play::SoundRequest sound_out;
-
+/*
 std::string landed_sound, hovering_sound, following_sound,mission_sound,emergency_sound,object_detected,no_object_found;
 nh_.getParam("/drone_feedback_signals_node/emergency_sound",emergency_sound);
 nh_.getParam("/drone_feedback_signals_node/landed_sound",landed_sound);
@@ -49,7 +49,7 @@ nh_.getParam("/drone_feedback_signals_node/hovering_sound",hovering_sound);
 nh_.getParam("/drone_feedback_signals_node/following_sound",following_sound);
 nh_.getParam("/drone_feedback_signals_node/mission_sound",mission_sound);
 nh_.getParam("/drone_feedback_signals_node/object_detected",object_detected);
-nh_.getParam("/drone_feedback_signals_node/no_object_found",no_object_found);
+nh_.getParam("/drone_feedback_signals_node/no_object_found",no_object_found);*/
 
 	while (ros::ok()){
 

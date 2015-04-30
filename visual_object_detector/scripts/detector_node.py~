@@ -12,11 +12,16 @@ image_data=None
 cv_bridge=None
 
 # TODO: complete
+
+def publish_image_processed(cv_frame):
+    image_pub.publish(cv_bridge.cv2_to_imgmsg(cv_frame, "rgb8"))
+
+
 def detect_object(cv_frame):
     """Return 0 if no object were found, or a positive integer <class> if an object
     of class <class> was found."""
 
-    imghsv = cv2.cvtColor(cv_frame, cv2.COLOR_BGR2HSV)
+    imghsv = cv2.cvtColor(cv_frame, cv2.COLOR_RGB2HSV)
 
     # define range of red color in HSV
     lower_red = np.array([0, 200,0])
@@ -45,6 +50,7 @@ def handle_detect_object(req):
     try:
         cv_frame = cv_bridge.imgmsg_to_cv2(image_data)
         detection=detect_object(cv_frame)
+	publish_image_processed(cv_frame)
         return DetectObjectResponse(detection)
     except Exception as e:
         rospy.logerr("Could not complete the request because of exception %s",e)
@@ -58,6 +64,8 @@ def main():
     rospy.init_node('detect_object_node')
     service = rospy.Service('detect_object', DetectObject, handle_detect_object)
     subscriber=rospy.Subscriber('input_image',Image,new_frame,queue_size=1)
+    global image_pub 
+    image_pub = rospy.Publisher("output_image",Image)
     global cv_bridge    
     cv_bridge = CvBridge()
     print "Ready to detect object with ",cv_bridge

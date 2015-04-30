@@ -135,7 +135,7 @@ gesturestype gesture_detector(std::vector<double> heights, int id){
 
 	if (id == leaders_id[0]){
 		current_leader_marker_altitude = leader1_marker_info[2];
-		shoulder_height = heights[0]*(double(7)/8);
+		shoulder_height = heights[0]*(double(7)/9);
 		arm_longitud = heights[0]*(double(3)/8);
 		shoulder_longitude = heights[0]*(double(2)/15);
 		}
@@ -158,8 +158,8 @@ gesturestype gesture_detector(std::vector<double> heights, int id){
 		gesture_out = FOLLOW_LEADER_1_GESTURE;		
 	else if (leader2_marker_info[2] > leader_info[2]+0.1)
 		gesture_out = FOLLOW_LEADER_2_GESTURE;
-	// TAKEOFF CONDITION (altitude, y position) -- Only given by leader 1
-	else if(/**id == leaders_id[0] &&*/ leader1_marker_info[2] >= shoulder_height -0.1 && leader1_marker_info[2] <= shoulder_height+0.1 && GestureMarkerFrame[0] >= LeaderFrame[0]-0.15 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.15 && 
+	// TAKEOFF CONDITION (altitude,  x position, y position) -- Only given by leader 1
+	else if(/**id == leaders_id[0] &&*/ leader1_marker_info[2] >= shoulder_height -0.2 && leader1_marker_info[2] <= shoulder_height+0.2 && GestureMarkerFrame[0] >= LeaderFrame[0]-0.2 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.2 && 
 		GestureMarkerFrame[1] >= LeaderFrame[1]+arm_longitud-0.2 && GestureMarkerFrame[1] <= LeaderFrame[1]+arm_longitud+0.2)
 		gesture_out = TAKEOFF_GESTURE;
 	//HOVERING CONDITION (altitude, x position, y position) -- Controlled by both leaders
@@ -167,8 +167,8 @@ gesturestype gesture_detector(std::vector<double> heights, int id){
 		GestureMarkerFrame[0] >= LeaderFrame[0]-arm_longitud-0.2 && GestureMarkerFrame[0] <= LeaderFrame[0]-arm_longitud+0.2 && GestureMarkerFrame[1] >= LeaderFrame[1]-0.2 && GestureMarkerFrame[1] <= LeaderFrame[1]+0.2)
 		gesture_out = HOVERING_GESTURE;
 	// MISSION CONDITION (altitude, x position, y position) -- Controlled by both leaders
-	else if(current_leader_marker_altitude >= shoulder_height -0.1 && current_leader_marker_altitude <= shoulder_height + 0.1 &&
-		GestureMarkerFrame[0] >= LeaderFrame[0]-0.1 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.1 && GestureMarkerFrame[1] >= LeaderFrame[1]-shoulder_longitude-0.1 && GestureMarkerFrame[1] <= LeaderFrame[1]-shoulder_longitude+0.1)
+	else if(current_leader_marker_altitude >= shoulder_height -0.2 && current_leader_marker_altitude <= shoulder_height + 0.2 &&
+		GestureMarkerFrame[0] >= LeaderFrame[0]-0.15 && GestureMarkerFrame[0] <= LeaderFrame[0]+0.15 && GestureMarkerFrame[1] >= LeaderFrame[1]-shoulder_longitude-0.2 && GestureMarkerFrame[1] <= LeaderFrame[1]-shoulder_longitude+0.2)
 		gesture_out = MISSION_GESTURE;
 	else
 		gesture_out = NON_GESTURE;
@@ -274,12 +274,11 @@ void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publ
 				else
 					std::cout <<"Failed to call service detect_object"<<std::endl;
 
-				if (detector_flag == 0 || detector_flag == -1){ // No object detected
+				if (detector_flag == 0 || detector_flag == -1) // No object detected
 					current_state = FOLLOWING_LEADER;
-					std::cout <<"None object detected"<<std::endl;}
-				else{ // Something has been detected
+				else // Something has been detected
 					current_state = HOVERING;
-					std::cout <<"An Object has been detected"<<std::endl;}
+
 				}
 			else if (find_gesture(0,20,LAND_GESTURE)>=90){
 				current_state = LANDED;
@@ -385,11 +384,11 @@ ros::ServiceClient demo_sound_client = nh_.serviceClient<drone_feedback_signals:
 		if (ant_state == MISSION && current_state == HOVERING){
 			sound.request.sound_name = "object_detected"; 
 			demo_sound_client.call(sound);
-			ros::Duration(4.0).sleep();}
+			ros::Duration(2.0).sleep();}
 		else if (ant_state == MISSION && current_state == FOLLOWING_LEADER){
 			sound.request.sound_name = "no_object_found";
 			demo_sound_client.call(sound);
-			ros::Duration(4.0).sleep();}
+			ros::Duration(2.0).sleep();}
 
 		if (current_state == EMERGENCY)
 			sound.request.sound_name = "Emergency";

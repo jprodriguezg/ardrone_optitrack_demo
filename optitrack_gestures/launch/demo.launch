@@ -5,11 +5,15 @@
 
 	<node name="detect_object_node" pkg="visual_object_detector" type="detector_node.py" output="screen">
 		<remap from="input_image"  to="/ardrone/image_raw"/>
+		<remap from="output_image"  to="/visual_object_detector/output_image"/>
 	</node>
 
 	<node name="drone_feedback_signals_node" pkg="drone_feedback_signals" type="feedback_signals_node" output="screen">
 		<remap from="demo_node_topic"  to="/demo"/>
-		<remap from="output_sound"  to="/robotsound"/>		
+	</node>
+
+	<node name="feedback_sounds_node" pkg="drone_feedback_signals" type="demo_sounds_server" output="screen">
+		<remap from="output_sound"  to="/robotsound"/>	
 		<param name="emergency_sound" value="$(find drone_feedback_signals)/sounds/emergency.wav"/>
 		<param name="landed_sound" value="$(find drone_feedback_signals)/sounds/landed.wav"/>
 		<param name="hovering_sound" value="$(find drone_feedback_signals)/sounds/hovering.wav"/>
@@ -17,9 +21,6 @@
 		<param name="mission_sound" value="$(find drone_feedback_signals)/sounds/mission.wav"/>
 		<param name="object_detected" value="$(find drone_feedback_signals)/sounds/object_detected.wav"/>
 		<param name="no_object_found" value="$(find drone_feedback_signals)/sounds/no_object_found.wav"/>
-	</node>
-
-	<node name="feedback_sounds_node" pkg="drone_feedback_signals" type="demo_sounds_server" output="screen">
 	</node>
 	
 	<node name="leader_selector" pkg="drone_following_leader" type="leader_selector_node" output="screen">

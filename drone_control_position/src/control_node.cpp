@@ -150,7 +150,7 @@ void ControlPitch(double actualX, double targetX, double velocity_limit, double 
 	vel = error*Kp + ((error-errorAntPitch)/ts)*Kd;	
 	
 	// Limit velocity
-	if (abs(abs(Drone_info[3])-abs(Target_point_info[3]+dPose[3]))>60){
+	if (abs(abs(Drone_info[3])-abs(Target_point_info[3]+dPose[3]))>45){
 		vel=std::min(0.05,vel);
 		vel=std::max(-0.05,vel);
 	}
@@ -170,7 +170,7 @@ void ControlRoll(double actualY, double targetY, double velocity_limit, double K
 	vel = error*Kp + ((error-errorAntRoll)/ts)*Kd;
 	
 	// Limit velocity
-	if (abs(abs(Drone_info[3])-abs(Target_point_info[3]+dPose[3]))>60){
+	if (abs(abs(Drone_info[3])-abs(Target_point_info[3]+dPose[3]))>45){
 		vel=std::min(0.08,vel);
 		vel=std::max(-0.08,vel);
 	}

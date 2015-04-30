@@ -7,10 +7,9 @@ project(optitrack_gestures)
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   roscpp
-  roscpp
   rospy
   std_msgs
-  std_msgs
+  sound_play
 )
 
 

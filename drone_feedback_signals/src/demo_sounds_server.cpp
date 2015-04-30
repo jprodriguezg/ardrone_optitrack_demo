@@ -36,22 +36,19 @@ bool call_sound(drone_feedback_signals::demo_sounds::Request  &req, drone_feedba
 
 int main(int argc, char **argv){
 
-
-
 ros::init(argc, argv, "demo_sounds_server");
 ros::NodeHandle nh_;
 ros::Rate rate(20.0);
 
+nh_.getParam("/feedback_sounds_node/emergency_sound",emergency_sound);
+nh_.getParam("/feedback_sounds_node/landed_sound",landed_sound);
+nh_.getParam("/feedback_sounds_node/hovering_sound",hovering_sound);
+nh_.getParam("/feedback_sounds_node/following_sound",following_sound);
+nh_.getParam("/feedback_sounds_node/mission_sound",mission_sound);
+nh_.getParam("/feedback_sounds_node/object_detected",object_detected);
+nh_.getParam("/feedback_sounds_node/no_object_found",no_object_found);
 
-nh_.getParam("/drone_feedback_signals_node/emergency_sound",emergency_sound);
-nh_.getParam("/drone_feedback_signals_node/landed_sound",landed_sound);
-nh_.getParam("/drone_feedback_signals_node/hovering_sound",hovering_sound);
-nh_.getParam("/drone_feedback_signals_node/following_sound",following_sound);
-nh_.getParam("/drone_feedback_signals_node/mission_sound",mission_sound);
-nh_.getParam("/drone_feedback_signals_node/object_detected",object_detected);
-nh_.getParam("/drone_feedback_signals_node/no_object_found",no_object_found);
-
-ros::Publisher sound_pub_=nh_.advertise<sound_play::SoundRequest>("/robotsound", 10);
+ros::Publisher sound_pub_=nh_.advertise<sound_play::SoundRequest>("output_sound", 10);
 ros::ServiceServer service = nh_.advertiseService("/demo_sounds", call_sound);
 	
 
