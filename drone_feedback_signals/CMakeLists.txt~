@@ -38,9 +38,9 @@ catkin_package(CATKIN_DEPENDS message_runtime)
 include_directories(${catkin_INCLUDE_DIRS})
 
 ## Declare a cpp executable
-add_executable(feedback_signals_node src/feedback_signals.cpp)
-add_dependencies(feedback_signals_node drone_control_msgs_generate_messages_cpp)
-target_link_libraries(feedback_signals_node ${catkin_LIBRARIES})
+add_executable(leds_feedback_signals_node src/leds_feedback_signals.cpp)
+add_dependencies(leds_feedback_signals_node drone_control_msgs_generate_messages_cpp)
+target_link_libraries(leds_feedback_signals_node ${catkin_LIBRARIES})
 
 
 add_executable(demo_sounds_server src/demo_sounds_server.cpp)

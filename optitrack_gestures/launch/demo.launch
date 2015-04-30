@@ -8,7 +8,7 @@
 		<remap from="output_image"  to="/visual_object_detector/output_image"/>
 	</node>
 
-	<node name="drone_feedback_signals_node" pkg="drone_feedback_signals" type="feedback_signals_node" output="screen">
+	<node name="feedback_leds_node" pkg="drone_feedback_signals" type="leds_feedback_signals_node" output="screen">
 		<remap from="demo_node_topic"  to="/demo"/>
 	</node>
 
