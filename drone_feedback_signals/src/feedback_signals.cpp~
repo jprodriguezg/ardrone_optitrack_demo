@@ -67,7 +67,7 @@ nh_.getParam("/drone_feedback_signals_node/no_object_found",no_object_found);
 		BatteryFlag = 0;
 	}
 
-	else if(drone_status != ant_status){
+	else if(drone_status != ant_status){ //Only works when a change in the robot status happen
 
 		// Led status feedback
 		srv.request.duration = 1.5;

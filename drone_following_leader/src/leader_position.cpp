@@ -108,7 +108,7 @@ ant_pose = initial_pose;
 
 	nh_.getParam("/drone_control_node/virtual_fence",virtual_fence);
 
-	if (last_status != drone_status){
+	if (last_status != drone_status){ // Only works when a change in the robot status happen
 		//if (last_status == "following_leader" || last_status == "landed")
 		if (drone_status == "hovering" &&  last_status == "mission_mode")
 			nh_.setParam("/drone_control_node/delta_pose",dDetectedVisionPose);

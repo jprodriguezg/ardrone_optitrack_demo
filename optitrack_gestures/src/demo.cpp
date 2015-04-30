@@ -380,9 +380,8 @@ ros::ServiceClient demo_sound_client = nh_.serviceClient<drone_feedback_signals:
 
 	// Call the service to reproduce a feedback sound
 	
-	if (ant_state != current_state){
+	if (ant_state != current_state){ //Only works when a change in the robot status happen
 			
-		
 		if (ant_state == MISSION && current_state == HOVERING){
 			sound.request.sound_name = "object_detected"; 
 			demo_sound_client.call(sound);
@@ -406,9 +405,6 @@ ros::ServiceClient demo_sound_client = nh_.serviceClient<drone_feedback_signals:
 		demo_sound_client.call(sound);
 		ant_state = current_state;
 	} 
-
-	
-
 
 	// Publishing node topic
 	data_out.gesture_detected = gestures[gesture_detected];
