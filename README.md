@@ -16,13 +16,13 @@ Package in charge of Drone's control position in the demo. The package has sever
 * drone_following_leader:
 Includes the nodes in charge of define the position of the leader to follow (e.g. The pose of the leader 1 o 2. If any leader is not detected the drone must mantain its current pose). It also restricts the target points values which drone can follow. 
 
-* messages
+* messages:
 Pacakge where all the messages of the system are defined
 
-* drone_feedback signals
+* drone_feedback signals:
 The package includes the package to start the feedback sounds server and the node which controls the led feedbacks of the drone. For the sound server is necessary to define several parameters with the location of the audio files to play.
 
-* send_control_position
+* send_control_position:
 It is a small package created to send directly the target points to follow via ROS parameters.
 
 
