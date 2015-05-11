@@ -35,3 +35,8 @@ Handles the state machine which control each step of the demostration. Also, it 
  * mission_target: Coordinates of the place where the drone should go to perform the object detection mission
  * delta_pose_vision: It is the pose which the drone will go if some object is detected.
 
+## Run the demo
+
+* Optitrack 
+ *Before start the demo the user should recalibrate the optitrack to obtain a high accuarte mesurement of each rigid body defined in the system. 
+ * Rigid  bodies definition: To perform the demo 5 objects need to be defined: drone, user 1, user 2, gesture marker 1, and gesture marker 2. It's too IMPORTANT to define the rigid body of each user cap in front of the drone (face to face). This definition is crucial because if it is bad defined the drone will follow the leader in with an incorrect angle. 
