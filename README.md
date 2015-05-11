@@ -23,6 +23,9 @@ Pacakge where all the messages of the system are defined
 The package includes the package to start the feedback sounds server and the node which controls the led feedbacks of the drone. For the sound server is necessary to define several parameters with the location of the audio files to play.
 
 * send_control_position:
-It is a small package created to send directly the target points to follow via ROS parameters.
+It is a simple package created to define directly the target points to follow via ROS parameters.
+
+* visual_object_detector
+The package is in charge of peform the visual detection task during the demo. It creates the output_image topic (It should be remped) where the last image processed is show.
 
 
