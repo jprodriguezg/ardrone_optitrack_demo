@@ -39,8 +39,8 @@ Handles the state machine which control each step of the demostration. Also, it 
 
 * Optitrack 
  * Before starting the demo, the user should calibrate the optitrack to obtain an accurate measure of each rigid body  pose of the system. 
- * Rigid  bodies definition: To perform the demo 5 objects must be defined: drone, user 1, user 2, gesture marker 1, and gesture marker 2. It's too IMPORTANT to define the rigid body of each user cap in front of the drone face. If the definition is wrong, the drone will follow the leader in an incorrect angle. (e.g. The drone could follow the back of the user)
+ * Rigid  bodies definition: To perform the demo 5 objects must be defined: drone, user 1, user 2, gesture marker 1, and gesture marker 2. It's too IMPORTANT to define the rigid body of each user cap in front of the drone face. If the definition is wrong, the drone will follow the leader in an incorrect angle (e.g. The drone could follow the back of the user).
  
 * launch files
-  * demo.launch: In this file all the parameters named above are defined. The user should check and modify (If it's necessary) each parameter of file the in order to run correctly the nodes. Please, be careful with the parameters and remap definitions. E.g. remaping  topics like "marker_leader_1_pose_topic" is quite important this topics contains the pose of the marker 1.
+  * demo.launch: In this file all the parameters named above are defined. The user should check and modify (If it's necessary) each parameter of file the in order to run correctly the nodes. Please, be careful with the parameters and remap definitions (e.g. remaping  topics like "marker_leader_1_pose_topic" which contains the pose of the marker 1). If the parameters and remapping topics are wrong defined, the nodes will work incorrectly.
  
