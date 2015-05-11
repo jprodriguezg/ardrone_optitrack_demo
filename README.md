@@ -42,7 +42,7 @@ Handles the state machine which control each step of the demostration. Also, it 
  * Rigid  bodies definition: To perform the demo 5 objects must be defined: drone, user 1, user 2, gesture marker 1, and gesture marker 2. It's too IMPORTANT to define the rigid body of each user cap in front of the drone face. If the definition is wrong, the drone will follow the leader in an incorrect angle (e.g. The drone could follow the back of the user).
  
 * launch files
-  * demo.launch: In this file all the parameters named above are defined. The user should check and modify (If it's necessary) each parameter of file the in order to run correctly the nodes. Please, be careful with the parameters and remap definitions (e.g. remaping  topics like "marker_leader_1_pose_topic" which contains the pose of the marker 1). If the parameters and remapping topics are wrong defined, the nodes will work incorrectly.
+  * demo.launch: In this file all the parameters named above are defined. The user should check and modify (If it's necessary) each parameter of file the in order to run correctly the nodes. Please, be careful with the parameters and remap definitions (e.g. remaping  topics like "marker_leader_1_pose_topic" which contains the pose of the marker 1). If the parameters and remapping topics are wrong define, the nodes will work incorrectly.
  
 ## Run the demo
 * After connect your computer to the AR Drone 2.0, run the ardrone_demo launch file. 
