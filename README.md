@@ -5,7 +5,7 @@ The demo includes the interaction between the AR Drone 2.0 and the Users. The in
 
 Here is a small description of each package included in the project
 
-*drone_control_position:
+* drone_control_position:
 Package in charge of Drone's control position in the demo. Several parameters should be definded in order to guarantee the correct behavior of the internal PD controllers (altitude, pich, roll and yaw). Also the safety restrictions for the demo are defined in the node. 
 
  * Kd and Kp vectors correspond to the differentian and proportinal gains of the controller.
