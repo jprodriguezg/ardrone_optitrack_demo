@@ -11,7 +11,7 @@ Package in charge of Drone's control position in the demo. The package has sever
  * Kd and Kp: Correspond to the differentian and proportinal gains of each controller.
  * velocity_limit: Defines the maximum velocities of each control action in the demo.
  * delta_pose vector: Defines the distance (if it's necessary) between the target point and the Drone
- * virtual_fence: Represents the area where the drone can fly. If the drone goes out of the fence it wil enter in emergency mode by landing or turning off the propellers.
+ * virtual_fence: Represents the area where the drone can fly. If the drone goes out of the fence, it wil enter in emergency mode by landing or turning off the propellers.
 
 
 
