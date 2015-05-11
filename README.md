@@ -45,6 +45,6 @@ Handles the state machine which control each step of the demostration. Also, it 
  * demo.launch: In this file are defined all the parameters named above. The user should check and modify (If it's necessary) each parameter of file in order to run correctly all the nodes. Please, be careful with definition of parameters and remapping topics (e.g. "marker_leader_1_pose_topic" which contains the pose of the marker 1). If these are wrong defined, the nodes will work incorrectly.
  
 ## Run the demo
-* After connect your computer to the AR Drone 2.0, run the ardrone_demo launch file. 
-* Start the demo nodes by running the demo launch file
+* After connect your computer to the AR Drone 2.0, run the ardrone driver demo  file: `roslaunch optitrack_gestures ardrone_demo.launch` 
+* Start the demo: `roslaunch optitrack_gestures demo.launch` 
 * Enjoy
