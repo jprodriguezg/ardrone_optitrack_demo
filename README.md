@@ -17,7 +17,7 @@ Package in charge of Drone's control position in the demo. The package has sever
 Includes the nodes in charge of define the position of the leader to follow (e.g. The pose of the leader 1 o 2. If any leader is not detected the drone must mantain its current pose). It also restricts the target points values which drone can follow. 
 
 * messages:
-Pacakge where all the messages of the system are defined
+contains all the messages of the demo project
 
 * drone_feedback signals:
 The package includes the package to start the feedback sounds server and the node which controls the led feedbacks of the drone. For the sound server is necessary to define several parameters with the location of the audio files to play.
@@ -29,5 +29,9 @@ It is a simple package created to define directly the target points to follow vi
 The package is in charge of peform the visual detection task during the demo. It creates the output_image topic (It should be remped) where the last image processed is show.
 
 * optitrack_gestures:
-It is the main package of the project. It handles the state machine which control each step in the demostration. Also includes the gestures definitions to the interaction between the drone and the user. As the control node, the package has several parameters which should be defined before start the demo.
+Handles the state machine which control each step of the demostration. Also, it includes the gestures definitions to perform the interaction between the drone and the userw. As the control node, the package has several parameters which should be defined before start the demo.
+ * leaders_heights
+ * leaders_id: These ids are defined in the optitrack system. Please check it and copy them here.
+ * mission_target: Coordinates of the place where the drone should go to perform the object detection mission
+ * delta_pose_vision: It is the pose which the drone will go if some object is detected.
 
