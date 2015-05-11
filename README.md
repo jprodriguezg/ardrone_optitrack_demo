@@ -35,7 +35,7 @@ Handles the state machine which control each step of the demostration. Also, it 
  * mission_target: Coordinates of the place where the drone should go to perform the object detection mission
  * delta_pose_vision: It is the pose which the drone will go if some object is detected.
 
-## Run the demo
+## Before running the demo
 
 * Optitrack 
  * Before starting the demo, the user should calibrate the optitrack to obtain an accurate measure of each rigid body  pose of the system. 
@@ -44,3 +44,7 @@ Handles the state machine which control each step of the demostration. Also, it 
 * launch files
   * demo.launch: In this file all the parameters named above are defined. The user should check and modify (If it's necessary) each parameter of file the in order to run correctly the nodes. Please, be careful with the parameters and remap definitions (e.g. remaping  topics like "marker_leader_1_pose_topic" which contains the pose of the marker 1). If the parameters and remapping topics are wrong defined, the nodes will work incorrectly.
  
+## Run the demo
+* After connect your computer to the AR Drone 2.0, run the ardrone_demo launch file. 
+* Start the demo nodes by running the demo launch file
+* Enjoy
