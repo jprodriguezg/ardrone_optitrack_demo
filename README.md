@@ -28,4 +28,6 @@ It is a simple package created to define directly the target points to follow vi
 * visual_object_detector
 The package is in charge of peform the visual detection task during the demo. It creates the output_image topic (It should be remped) where the last image processed is show.
 
+* optitrack_gestures
+It is the main package of the project. It handles the state machine which control each step in the demostration. Also includes the gestures definitions to the interaction between the drone and the user. As the control node, the package has several parameters which should be defined before start the demo.
 
