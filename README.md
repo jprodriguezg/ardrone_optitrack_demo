@@ -39,4 +39,4 @@ Handles the state machine which control each step of the demostration. Also, it 
 
 * Optitrack 
  * Before starting the demo, the user should calibrate the optitrack to obtain a high accuarte mesurement of each rigid body of the system. 
- * Rigid  bodies definition: To perform the demo 5 objects must be defined: drone, user 1, user 2, gesture marker 1, and gesture marker 2. It's too IMPORTANT to define the rigid body of each user cap in front of the drone face. This definition is crucial because if it is not well performed the drone will follow the leader with an incorrect angle. 
+ * Rigid  bodies definition: To perform the demo 5 objects must be defined: drone, user 1, user 2, gesture marker 1, and gesture marker 2. It's too IMPORTANT to define the rigid body of each user cap in front of the drone face. If the definition is wrong, the drone will follow the leader in an incorrect angle. (e.g. The drone could follow the back of the user)
