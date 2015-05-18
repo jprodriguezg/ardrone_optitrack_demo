@@ -5,8 +5,8 @@ The demo includes the interaction between the AR Drone 2.0 and 2 users. The inte
 
 Here is a little resume of each package included in the project
 
-* drone_control_position:
-Package in charge of Drones control position. The package has several parameters to modify the behavior of the internal P or PD controllers (altitude, pitch, roll and yaw). Also, some parameters handle the safe restrictions of the demo.
+* *drone_control_position*  
+ Package in charge of Drones control position. The package has several parameters to modify the behavior of the internal P or PD controllers (altitude, pitch, roll and yaw). Also, some parameters handle the safe restrictions of the demo.
 
  * Kd and Kp: Correspond to the diferential and proportional gains of each controller.
  * velocity_limit: Defines the maximum velocities of each control action.
