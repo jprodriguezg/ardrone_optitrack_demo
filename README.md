@@ -13,23 +13,23 @@ Here is a little resume of each package included in the project
  * delta_pose vector: Defines the distance (if it's necessary) between the target point and the Drone
  * virtual_fence: Represents the area where the drone can fly. If the drone goes out of the fence, it will enter in emergency mode by landing or turning off the propellers.
 
-* drone_following_leader:
-Includes the nodes in charge of define the position of the leader to follow (e.g. The pose of the leader 1 o 2). If any leader is not detected, the drone must maintain its current pose. The nodes also restrict the target points values which drone can follow.
+* *drone_following_leader*  
+ Includes the nodes in charge of define the position of the leader to follow (e.g. The pose of the leader 1 o 2). If any leader is not detected, the drone must maintain its current pose. The nodes also restrict the target points values which drone can follow.
 
-* messages:
-contains all the messages of the demo project
+* *messages*  
+ Contains all the messages of the demo project
 
-* drone_feedback signals:
-The package includes  a node to start the feedback sounds server and  another  node to control the led feedbacks. Before run the sound server node, please define the parameters with the location of the audio files to play.
+* *drone_feedback signals*  
+ The package includes  a node to start the feedback sounds server and  another  node to control the led feedbacks. Before run the sound server node, please define the parameters with the location of the audio files to play.
 
-* send_control_position:
-It is a simple package created to define directly the target points to follow via ROS parameters.
+* *send_control_position*  
+ It is a simple package created to define directly the target points to follow via ROS parameters.
 
-* visual_object_detector:
-The package is in charge of perform the visual detection task during the demo. It creates the output image topic where the last image processed is show.
+* *visual_object_detector*  
+ The package is in charge of perform the visual detection task during the demo. It creates the output image topic where the last image processed is show.
 
-* optitrack_gestures:
-Handles the state machine which control each step of the demostration. Also, it includes the gestures definitions to perform the interaction between the drone and the users. As the control node, the package has several parameters which should be defined before start the demo.
+* *optitrack_gestures*  
+ Handles the state machine which control each step of the demostration. Also, it includes the gestures definitions to perform the interaction between the drone and the users. As the control node, the package has several parameters which should be defined before start the demo.
  * leaders_heights
  * leaders_id: These ids are defined in the Optitrack system. Please check it and copy them here.
  * mission_target: Coordinates of the place where the drone should go to perform the object detection mission
