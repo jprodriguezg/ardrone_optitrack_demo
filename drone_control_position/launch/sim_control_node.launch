@@ -12,8 +12,8 @@
 		<rosparam>new_position:  [0.0, 0.0]</rosparam>  <!-- [X, Y] -->
 	</node>
 
-	<node name="drone_control_node" pkg="drone_control_position" type="sim_control_drone_position_node" output="screen">
-		<remap from="drone_info_topic"  to="/optitrack/rigid_bodies"/>
+	<node name="drone_control_node" pkg="drone_control_position" type="control_drone_position_node" output="screen">
+		<remap from="drone_info_topic"  to="/optitrack/quadrotor"/>
 		<remap from="control_info"  to="/drone_target_points"/>
 		<rosparam>Kd:  [0.5, 0.5]</rosparam>  <!-- [pitch, roll] -->
 		<rosparam>Kp:  [0.5, 0.5, 0.25, 0.05]</rosparam>  <!-- [pitch, roll, altitude, yaw] -->
