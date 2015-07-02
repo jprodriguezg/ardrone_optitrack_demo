@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   roscpp
+  ardrone_autonomy
 )
 
 ################################################
@@ -21,6 +22,7 @@ catkin_package(	CATKIN_DEPENDS
 		roscpp 
 		std_msgs
 		geometry_msgs
+		ardrone_autonomy
 )
 
 ###########

@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sound_play
   message_generation
+  ardrone_autonomy
 )
 
 ## Generate services in the 'srv' folder
@@ -29,7 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## catkin specific configuration ##
 ###################################
 
-catkin_package(CATKIN_DEPENDS message_runtime)
+catkin_package(CATKIN_DEPENDS message_runtime ardrone_autonomy)
 
 ###########
 ## Build ##

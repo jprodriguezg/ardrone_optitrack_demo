@@ -10,6 +10,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   sound_play
+  ardrone_autonomy
+  visual_object_detector
 )
 
 
@@ -22,7 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## catkin specific configuration ##
 ###################################
 
-catkin_package(
+catkin_package(CATKIN_DEPENDS ardrone_autonomy visual_object_detector
 
 )
 
