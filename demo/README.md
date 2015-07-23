@@ -1,1 +1,1 @@
-This package contains the launch file which runs all the necessary nodes to run the Demo
+This package contains the launch files which run all the necessary nodes to run the Demo
