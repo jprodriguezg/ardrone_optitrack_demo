@@ -12,7 +12,8 @@ The general information of packages is in the README file of each folder.
  * Before starting the demo, the user should calibrate the optitrack to obtain an accurate measure of the pose of each rigid body. 
  * Rigid bodies definition: To perform the demo 5 objects must be defined: drone, user 1, user 2, gesture marker 1, and gesture marker 2. It's too IMPORTANT to define the rigid bodies of the users caps in front of the drone face. If the definition is wrong, the drone will follow the leader in an incorrect angle (e.g. The drone could follow the back of the user).
  
-* Comunication between Demo and Optitrack computers
+* Comunication between Demo and Optitrack computers 
+
   Both machines need to be connected on the same network. One of the computers should be defined as Master in order handle the nodes, servers and parameters of ROS. In the `windows_scripts` folder are some examples of how to define the Optitrack computer as Master.
  
 * Main launch file
