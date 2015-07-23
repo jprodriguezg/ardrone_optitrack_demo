@@ -20,6 +20,6 @@ The general information of packages is in the README file of each folder.
  * `demo.launch` (demo folder): In this file are defined all the parameters of Demo nodes. The user should check and modify (If it's necessary) each parameter in order to run correctly all the nodes. Please, be careful with definition of parameters and remapping topics (e.g. "marker_leader_1_pose_topic" which contains the pose of the marker 1). If these are wrong defined, the system will work incorrectly.
  
 ## Run the demo
-1. After connect your computer to the AR Drone 2.0, run the ardrone driver demo  file: `roslaunch optitrack_gestures ardrone_demo.launch` 
+1. After connect your computer to the AR Drone 2.0, run the ardrone driver demo  file: `roslaunch demo ardrone_demo.launch` 
 2. Start the demo: `roslaunch demo demo.launch` 
 3. Enjoy
