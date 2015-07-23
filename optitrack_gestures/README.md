@@ -1,6 +1,6 @@
 #optitrack_gestures
 
-Handles the state machine which control each step of the demostration. Also, it includes the gestures definitions to perform the interaction between the drone and the users. As the control node, the package has several parameters which should be defined before start the demo.
+Handles the state machine which control each step of the demostration. Also, it includes the gestures definitions to perform the interaction between the drone and the users. As the control node, the package has several private parameters which should be defined before start the demo.
 
 * `leaders_heights`
 * `leaders_id` These ids are defined in the Optitrack system. Please check it and copy them here.
