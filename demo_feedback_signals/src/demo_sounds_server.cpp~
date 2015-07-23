@@ -38,15 +38,16 @@ int main(int argc, char **argv){
 
 ros::init(argc, argv, "demo_sounds_server");
 ros::NodeHandle nh_;
+ros::NodeHandle nhp_("~");
 ros::Rate rate(20.0);
 
-nh_.getParam("/feedback_sounds_node/emergency_sound",emergency_sound);
-nh_.getParam("/feedback_sounds_node/landed_sound",landed_sound);
-nh_.getParam("/feedback_sounds_node/hovering_sound",hovering_sound);
-nh_.getParam("/feedback_sounds_node/following_sound",following_sound);
-nh_.getParam("/feedback_sounds_node/mission_sound",mission_sound);
-nh_.getParam("/feedback_sounds_node/object_detected",object_detected);
-nh_.getParam("/feedback_sounds_node/no_object_found",no_object_found);
+nhp_.getParam("emergency_sound",emergency_sound);
+nhp_.getParam("landed_sound",landed_sound);
+nhp_.getParam("hovering_sound",hovering_sound);
+nhp_.getParam("following_sound",following_sound);
+nhp_.getParam("mission_sound",mission_sound);
+nhp_.getParam("object_detected",object_detected);
+nhp_.getParam("no_object_found",no_object_found);
 
 ros::Publisher sound_pub_=nh_.advertise<sound_play::SoundRequest>("output_sound", 10);
 ros::ServiceServer service = nh_.advertiseService("/demo_sounds", call_sound);

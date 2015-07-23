@@ -26,7 +26,7 @@ enum gesturestype{NON_GESTURE,HOVERING_GESTURE,TAKEOFF_GESTURE,LAND_GESTURE,FOLL
 enum drone_state{LANDED,HOVERING,FOLLOWING_LEADER,MISSION,EMERGENCY};
 
 // Some global variables
-std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), TargetControlFrames(4,0), GestureMarkerFrame(2,0), mission_pose (4,0); 
+std::vector<double> drone_info (4,0), leader1_marker_info (4,0), leader2_marker_info (4,0),leader_info(4,0), LeaderFrame(2,0), TargetControlFrames(4,0), GestureMarkerFrame(2,0); 
 std::vector<float> quaternion1 (4,0), quaternion2 (4,0);
 std::vector<float> leaders_id(2,0);  // Posible leaders ids
 std::deque<gesturestype> gestures_queue (40,NON_GESTURE);
@@ -200,13 +200,6 @@ double find_gesture(int begin, int end, gesturestype search_gesture){
 	return out;
 }
 
-void garbage(ros::Publisher demo_info_pub_, std::map<drone_state,std::string> status, drone_control_msgs::demo_info data_out,drone_state current_state){
-
-	data_out.demo_status = status[current_state];
-	demo_info_pub_.publish(data_out);
-}
-
-
 void drone_status(drone_state &current_state, ros::Publisher &takeoff, ros::Publisher &land, ros::NodeHandle &nh_, ros::ServiceClient &detector_client, visual_object_detector::DetectObject &detector_srv, ros::ServiceClient &drone_cam_client, ardrone_autonomy::CamSelect &drone_cam_srv){
 
 	std_msgs::Empty EmptyMsg;
@@ -315,6 +308,7 @@ int main(int argc, char** argv){
     
 ros::init(argc, argv, "optitrack_gestures_demo");
 ros::NodeHandle nh_;
+ros::NodeHandle nhp_("~");
 ros::Rate rate(20.0);
 
 // Map declarations
@@ -347,10 +341,11 @@ drone_feedback_signals::demo_sounds sound;
 
 //Physical user data
 std::vector<double> heights;
-nh_.getParam("/gestures_node/leaders_heights",heights);
-nh_.getParam("/gestures_node/leaders_id",leaders_id);
-nh_.getParam("/leader_selector/leader_id",leader_id);
-nh_.getParam("/gestures_node/mission_target",mission_pose);
+nhp_.getParam("leaders_heights",heights);
+nhp_.getParam("leaders_id",leaders_id);
+//nh_.getParam("/leader_selector/leader_id",leader_id);
+nh_.getParam("leader_id",leader_id);
+
 
 // Publishers and subscribers
 ros::Subscriber optitrack_leader_sub_=nh_.subscribe("leader_pose_topic", 1, hasReceivedLeaderState);
@@ -379,7 +374,7 @@ ros::ServiceClient demo_sound_client = nh_.serviceClient<drone_feedback_signals:
 
 	// Call the service to reproduce a feedback sound
 	
-	if (ant_state != current_state){ //Only works when a change in the robot status happen
+	if (ant_state != current_state){ //Only works when a change in the robot status happens
 			
 		if (ant_state == MISSION && current_state == HOVERING){
 			sound.request.sound_name = "object_detected"; 

@@ -198,6 +198,7 @@ int main(int argc, char** argv){
     
 ros::init(argc, argv, "control_drone_position_node");
 ros::NodeHandle nh_;
+ros::NodeHandle nhp_("~");
 ros::Rate rate(20.0);
 
 double fs=20;
@@ -208,7 +209,7 @@ ros::Subscriber contol_sub = nh_.subscribe("control_info", 10, hasReceivedContro
 ros::Subscriber alt_sub = nh_.subscribe("/ardrone/navdata", 10, hasReceivedNavdataInfo);
 
 ros::Publisher vel_pub_=nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
-ros::Publisher drone_info_pub_=nh_.advertise<drone_control_msgs::drone_control_info>("/drone_control_info", 1);
+ros::Publisher drone_info_pub_=nh_.advertise<drone_control_msgs::drone_control_info>("drone_control_info", 1);
 ros::Publisher reset_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/reset",1);
 ros::Publisher land_pub_=nh_.advertise<std_msgs::Empty>("/ardrone/land",1);
 
@@ -223,11 +224,11 @@ srv.request.duration = 0;
 
 	while (ros::ok()){
 	
-	nh_.getParam("/drone_control_node/Kp",Kp);
-	nh_.getParam("/drone_control_node/Kd",Kd);
-	nh_.getParam("/drone_control_node/delta_pose", dPose);
-	nh_.getParam("/drone_control_node/virtual_fence",virtual_fence);
-	nh_.getParam("/drone_control_node/velocity_limit",velocity_limit);
+	nhp_.getParam("Kp",Kp);
+	nhp_.getParam("Kd",Kd);
+	nhp_.getParam("delta_pose", dPose);
+	nhp_.getParam("velocity_limit",velocity_limit);
+	nhp_.getParam("virtual_fence",virtual_fence);
 
 	//std::cout << "En el while" << std::endl;
 

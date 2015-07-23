@@ -36,7 +36,7 @@
 		<remap from="leader_pose_topic"  to="/leader_info_topic"/>
 		<remap from="demo_info_topic"  to="/demo"/>
 		<rosparam>leaders_heights: [1.78, 1.80]</rosparam>	
-		<rosparam>leaders_id: [3, 2]</rosparam>	
+		<rosparam>leaders_id: [2, 3]</rosparam>	
 		<rosparam>mission_target: [-1.15, 0.0, 1.0, 180]</rosparam>
 		<rosparam>delta_pose_vision: [0.0, 0.0, 1.0, -180.0]</rosparam> 
 	</node>
@@ -46,17 +46,23 @@
 		<remap from="desired_leader_position_topic"  to="/drone_target_points"/>
 		<remap from="drone_control_topic"  to="/drone_control_info"/>
 		<remap from="demo_node_topic"  to="/demo"/>
+		<remap from="drone_initial_pose"  to="/drone_target_points/initial_pose"/>
+		<remap from="drone_mission_target_pose"  to="/gestures_node/mission_target"/>
+		<remap from="delta_pose_vision"  to="/gestures_node/delta_pose_vision"/>
+		<remap from="drone_control_delta_pose"  to="/drone_control_node/delta_pose"/>
 		<rosparam>initial_pose: [0.0, 0.0, 1.0, 0.0]</rosparam> 
 	</node>
 
 	<node name="drone_control_node" pkg="drone_control_position" type="control_drone_position_node" output="screen">
 		<remap from="drone_info_topic"  to="/optitrack/drone"/>
 		<remap from="control_info"  to="/drone_target_points"/>
+		<remap from="drone_control_info"  to="/drone_control_info"/>
+		<remap from="leader_id"  to="/leader_selector/leader_id"/>
 		<rosparam>Kd: [0.35, 0.35]</rosparam>  <!-- [pitch, roll] -->  <!-- 0.25 0.25 -->
 		<rosparam>Kp: [0.2, 0.2,  0.5, 0.0325]</rosparam>  <!-- [pitch, roll, altitude, yaw] --><!-- 0.25 0.25 0.5 0.0125-->
 		<rosparam>velocity_limit: [0.15, 0.15, 1.0, 1.0]</rosparam>  <!-- [pitch, roll, altitude, yaw] -->
 		<rosparam>delta_pose: [-1.5, 0.0, 0.0, 0.0]</rosparam>  <!-- [x,y,z,yaw (degrees)] -->
-		<rosparam>virtual_fence: [3.0, -1.8, 2.4, -2.5, 2.25]</rosparam>  <!-- [maxX, minX, maxY, minY, maxAltitude] -->
+		<rosparam>virtual_fence: [3.0, -2.4, 2.45, -2.45, 2.25]</rosparam>  <!-- [maxX, minX, maxY, minY, maxAltitude] -->
 	
 	</node>
 

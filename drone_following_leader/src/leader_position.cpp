@@ -96,11 +96,16 @@ ros::Subscriber optitrack_demo_node_sub_=nh_.subscribe("demo_node_topic", 1, has
 ros::Subscriber optitrack_drone_control_sub_=nh_.subscribe("drone_control_topic", 1, hasReceivedDroneControlState);
 
 ros::Publisher leader_info_pub_=nh_.advertise<drone_control_msgs::send_control_data>("desired_leader_position_topic", 1);
-
+/*
 nh_.getParam("/drone_target_points/initial_pose",initial_pose);
 nh_.getParam("/gestures_node/mission_target",mission_pose);
 nh_.getParam("/gestures_node/delta_pose_vision",dDetectedVisionPose);
-nh_.getParam("/drone_control_node/delta_pose", dPose);
+nh_.getParam("/drone_control_node/delta_pose", dPose);*/
+
+nh_.getParam("drone_initial_pose",initial_pose);
+nh_.getParam("drone_mission_target_pose",mission_pose);
+nh_.getParam("delta_pose_vision",dDetectedVisionPose);
+nh_.getParam("drone_control_delta_pose", dPose);
 
 ant_pose = initial_pose;
 
